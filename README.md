@@ -26,6 +26,58 @@ python mythos/mythos_client.py "explain recursion like I'm a potato"
 
 ---
 
+## 🏭 THE FULL PRODUCT LINE — run OUR weights, from git, right now
+
+Every m.ai model version lives in [`models/registry.json`](models/registry.json)
+and runs on the **actual from-scratch checkpoints in this repo** (git LFS):
+
+```bash
+pip install torch tiktoken --index-url https://download.pytorch.org/whl/cpu
+git lfs pull                      # fetch the real weights
+python mai_run.py --list          # the whole lineup
+python mai_run.py potus-0.1 "Once upon a time there was a little robot"
+python mai_run.py ropus-0.3 "def add_numbers(a, b):"
+```
+
+| Version | Weights | Status |
+|---|---|---|
+| **potus 0.1 / 0.2** | Phase-1 rock (16M) | ✅ runs today |
+| **potus 0.3 / 0.4** | Phase-2 rock-potato (51M) | ✅ runs today |
+| **potus 1.0 FINAL** | `ckpt (3).pt` from the founder's Downloads folder | 📤 [awaiting upload](UPLOAD_YOUR_WEIGHTS.md) |
+| **ropus 0.1 – 0.4** | same rocks, reasoning-tuned sampling | ✅ runs today |
+| **ropus 4.0** ("THE BIG ONE") | `ckpt (1).pt` | 📤 [awaiting upload](UPLOAD_YOUR_WEIGHTS.md) |
+| **ropus 1.0 FINAL** | alias → ropus 4.0 | ships when the big one lands |
+| **alus omni 1.0** | `ckpt.pt` core + image + video | 📤 core awaiting upload; omni tools ready |
+
+Field report from actual runs of the git weights: potus-0.1 wrote a story
+about a robot who befriended himself (relatable), and ropus-0.3 produced
+`return a + b` — **a correct line of code** — before calling a function it
+never defined. Growth.
+
+### 🎨 Alus Omni — the all-in-one (text + image gen + 30–60s video gen)
+
+```bash
+python alus_omni/omni.py text  "explain recursion"                       # anywhere
+python alus_omni/omni.py image "a potato supercomputer" --out p.png      # GPU
+python alus_omni/omni.py video "a rock learning to code" --seconds 30    # GPU + ffmpeg
+```
+
+Text runs on the registry potatoes (or the Kimi engine if `MOONSHOT_API_KEY`
+is set). Image uses Stable Diffusion via diffusers; video generates scene
+clips and ffmpeg-concats them into one 30–60s MP4. Needs a GPU — Kaggle
+notebooks count, that's the whole business model here.
+
+### 🍽️ Feeding the potatoes (data from the internet, and YOUR convos)
+
+```bash
+python train/prepare_web_data.py --dataset tinystories --outdir data/mix           # internet data
+python train/prepare_web_data.py --dataset python-code --outdir data/mix --append  # more internet
+python train/distill_dataset.py --samples 2000 --out data/mythos_distill.jsonl     # Kimi K2.6 wisdom
+python train/export_convos.py --in modeldeck-export.json --outdir data/mix --append # your own chats
+```
+
+---
+
 ## 🤔 What even is this repo?
 
 The continuing adventures of increasingly unhinged language models trained **completely from scratch** — no fine-tuning*, no Llama, no shortcuts, no dignity — by a **kid with a MacBook, Claude Pro, and a concerning amount of free time.**
