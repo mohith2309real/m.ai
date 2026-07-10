@@ -5,8 +5,8 @@ Run this on your MacBook in a clone of this repo, and the three
 `awaiting-upload` models in `models/registry.json` come alive:
 
 ```bash
-git clone https://github.com/mohith2309/pitti-rokini   # (or m.ai after rename)
-cd pitti-rokini
+git clone https://github.com/mohith2309/m.ai  
+cd m.ai
 git lfs install
 
 # your files -> their model slots (from models/registry.json):

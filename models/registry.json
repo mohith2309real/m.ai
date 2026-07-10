@@ -144,13 +144,18 @@
     },
     "alus-omni-1.0": {
       "family": "alus",
-      "role": "all-in-one: text + image gen + video gen",
-      "checkpoint": "checkpoints/alus-omni-core.pt",
-      "status": "awaiting-upload",
-      "upload_from": "/Users/mohith/Downloads/ckpt.pt",
+      "role": "alias \u2014 the shipped Alus",
+      "alias_of": "alus-1.0"
+    },
+    "alus-1.0": {
+      "family": "alus",
+      "role": "all-in-one: text + image gen + video gen \u2014 VERSION 1",
+      "checkpoint": "checkpoints/alus-1.0.pt",
+      "status": "available",
+      "notes": "Seeded from the best Ropus (51M) and trained 300 iters on the 1,600-doc mixed corpus with Alus identity + m.ai behavior docs. Text core of the omni stack (alus_omni/ adds image + 30-60s video on GPU).",
       "profile": {
-        "temperature": 0.7,
-        "top_k": 60,
+        "temperature": 0.6,
+        "top_k": 50,
         "max_new_tokens": 300
       },
       "omni": {

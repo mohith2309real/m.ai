@@ -98,7 +98,7 @@ def main():
     ap.add_argument("--seconds", type=int, default=30, help="video length (5-60)")
     ap.add_argument("--steps", type=int, default=2, help="diffusion steps (sd-turbo: 1-4)")
     ap.add_argument("--device", default=None, help="cuda or cpu (auto)")
-    ap.add_argument("--model", default="ropus-0.3", help="registry model for text mode")
+    ap.add_argument("--model", default="alus-1.0", help="registry model for text mode")
     args = ap.parse_args()
 
     if args.device is None:

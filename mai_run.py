@@ -11,7 +11,7 @@ Needs: torch, tiktoken  (pip install torch tiktoken --index-url
 https://download.pytorch.org/whl/cpu for a CPU-only install).
 If a checkpoint is an LFS pointer (134 bytes), fetch it first:
     git lfs pull   — or —   curl -L -o <path> \
-    https://media.githubusercontent.com/media/mohith2309/pitti-rokini/main/<path>
+    https://media.githubusercontent.com/media/mohith2309/m.ai/main/<path>
 """
 import argparse
 import json
@@ -73,7 +73,7 @@ def main():
             f"{m['checkpoint']} is an LFS pointer, not real weights. Fetch it:\n"
             f"  git lfs pull  — or —\n"
             f"  curl -L -o {m['checkpoint']} https://media.githubusercontent.com/media/"
-            f"mohith2309/pitti-rokini/main/{m['checkpoint']}")
+            f"mohith2309/m.ai/main/{m['checkpoint']}")
 
     import tiktoken
     import torch

@@ -47,7 +47,7 @@ python mai_run.py ropus-0.3 "def add_numbers(a, b):"
 | **ropus 0.1 – 0.4** | same rocks, reasoning-tuned sampling | ✅ runs today |
 | **ropus 4.0** ("THE BIG ONE") | `ckpt (1).pt` | 📤 [awaiting upload](UPLOAD_YOUR_WEIGHTS.md) |
 | **ropus 1.0 FINAL** | alias → ropus 4.0 | ships when the big one lands |
-| **alus omni 1.0** | `ckpt.pt` core + image + video | 📤 core awaiting upload; omni tools ready |
+| **alus 1.0** 👑 | seeded from best Ropus, trained on the full mixed diet | ✅ SHIPPED — text today, image+video tools on GPU |
 
 Field report from actual runs of the git weights: potus-0.1 wrote a story
 about a robot who befriended himself (relatable), and ropus-0.3 produced
@@ -178,7 +178,7 @@ ollama create mythos -f mythos/mythos.Modelfile
 ## 📁 Repo Structure
 
 ```
-m.ai/                              ← rename the repo to this in Settings, we're an org now
+m.ai/                              ← that's the actual repo name now. corporate.
 ├── README.md                      ← corporate communications (this)
 ├── interface/
 │   └── index.html                 ← m.ai Deck: the org's official frontend
@@ -199,7 +199,7 @@ m.ai/                              ← rename the repo to this in Settings, we'r
 
 ## 🗺️ Roadmap (Q3 FY26, because orgs say things like that)
 
-- [x] Rebrand to m.ai (rename repo in Settings → `m.ai`, takes 10 seconds, do it)
+- [x] Rebrand to m.ai — repo RENAMED, the org is legally real (it is not)
 - [x] Announce Mythos-class model before building it (this is called "product marketing")
 - [x] Went fully sovereign — removed all external engines, our weights only ✅
 - [x] Distillation pipeline ✅
