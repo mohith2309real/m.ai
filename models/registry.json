@@ -47,10 +47,10 @@
     },
     "potus-0.5": {
       "family": "potus",
-      "role": "decisive executive \u2014 first m.ai-TRAINED release",
+      "role": "decisive executive \u2014 m.ai-trained on the full mixed diet",
       "checkpoint": "checkpoints/potus-0.5.pt",
       "status": "available",
-      "notes": "phase-1 weights fine-tuned 200 iters (CPU, cloud basement) on 1000 fresh TinyStories from the internet + m.ai identity docs. Knows who it is now.",
+      "notes": "phase-1 weights (16M) trained in two rounds: 1000 TinyStories, then the 1,600-doc mixed corpus (Wikipedia, web text, code, stories) with Potus identity + m.ai behavior docs. Knows its name and family. Attempts journalism; achieves recursion.",
       "profile": {
         "temperature": 0.5,
         "top_k": 40,

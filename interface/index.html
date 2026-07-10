@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>m.ai Deck — the org's official interface</title>
+<style>
+  :root {
+    --bg: #07090f; --bg2: #0b0e17; --panel: #10141f; --panel2: #171c2a;
+    --border: #232a3d; --text: #e9edf6; --muted: #8a93ab;
+    --accent: #7c5cff; --accent2: #22d3aa; --danger: #ff5d73; --warn: #f0b23e;
+    --potus: #f0b23e; --ropus: #7c5cff; --alus: #22d3aa;
+    --radius: 12px;
+    --grad: linear-gradient(135deg, #7c5cff 0%, #4f8cff 60%, #22d3aa 130%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background:
+      radial-gradient(1000px 500px at 85% -10%, rgba(124, 92, 255, .14), transparent 60%),
+      radial-gradient(800px 400px at -10% 110%, rgba(34, 211, 170, .10), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font-family: "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    letter-spacing: .01em;
+  }
+  ::selection { background: rgba(124, 92, 255, .4); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  header {
+    display: flex; align-items: center; gap: 14px; padding: 12px 20px;
+    background: rgba(16, 20, 31, .85); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  header h1 { font-size: 17px; font-weight: 800; letter-spacing: .02em; }
+  header h1 span {
+    background: var(--grad); -webkit-background-clip: text;
+    background-clip: text; color: transparent;
+  }
+  header h1 small { color: var(--muted); font-weight: 400; font-size: 12px; }
+  .conn { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+  select, input[type=text], input[type=password], input[type=number], textarea {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 10px; font-size: 13px; font-family: inherit;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  select:focus, input:focus, textarea:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124, 92, 255, .18);
+  }
+  input[type=text], input[type=password] { min-width: 180px; }
+  button {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer;
+    font-family: inherit; font-weight: 500;
+    transition: transform .1s, border-color .15s, box-shadow .15s, filter .15s;
+  }
+  button:hover { border-color: var(--accent); transform: translateY(-1px); }
+  button:active { transform: translateY(0); }
+  button.primary {
+    background: var(--grad); border: none; color: #fff; font-weight: 700;
+    box-shadow: 0 4px 18px rgba(124, 92, 255, .35);
+  }
+  button.primary:hover { filter: brightness(1.1); }
+  button.good {
+    background: linear-gradient(135deg, #22d3aa, #16a97f); border: none;
+    color: #032018; font-weight: 700; box-shadow: 0 4px 18px rgba(34, 211, 170, .3);
+  }
+  button.danger { color: var(--danger); }
+  button:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--danger);
+    display: inline-block; box-shadow: 0 0 8px rgba(255, 93, 115, .8);
+  }
+  .dot.on { background: var(--accent2); box-shadow: 0 0 10px rgba(34, 211, 170, .9); }
+
+  nav {
+    display: flex; gap: 6px; padding: 10px 20px;
+    background: transparent; border-bottom: 1px solid var(--border);
+  }
+  nav button {
+    border: 1px solid transparent; border-radius: 999px;
+    background: transparent; color: var(--muted); padding: 7px 18px; font-weight: 600;
+  }
+  nav button:hover { color: var(--text); transform: none; }
+  nav button.active {
+    background: var(--panel2); color: var(--text); border-color: var(--border);
+    box-shadow: inset 0 0 0 1px rgba(124, 92, 255, .35), 0 2px 10px rgba(0, 0, 0, .4);
+  }
+  main { flex: 1; overflow: hidden; display: flex; }
+  .tab { display: none; flex: 1; overflow: hidden; }
+  .tab.active { display: flex; }
+
+  /* Chat */
+  #tab-chat { flex-direction: row; }
+  .sidebar {
+    width: 230px; background: var(--bg2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 12px; gap: 8px; overflow-y: auto;
+  }
+  .chat-item {
+    padding: 9px 12px; border-radius: 8px; font-size: 13px; cursor: pointer;
+    color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    border: 1px solid transparent; transition: all .12s;
+  }
+  .chat-item.active, .chat-item:hover {
+    background: var(--panel2); color: var(--text); border-color: var(--border);
+  }
+  .chat-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .chat-toolbar {
+    display: flex; gap: 8px; align-items: center; padding: 10px 16px;
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .fam {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px;
+    border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; border: 1px solid var(--border); color: var(--muted);
+  }
+  .fam::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .fam.potus { color: var(--potus); border-color: rgba(240, 178, 62, .45); }
+  .fam.potus::before { background: var(--potus); box-shadow: 0 0 6px var(--potus); }
+  .fam.ropus { color: var(--ropus); border-color: rgba(124, 92, 255, .45); }
+  .fam.ropus::before { background: var(--ropus); box-shadow: 0 0 6px var(--ropus); }
+  .fam.alus { color: var(--alus); border-color: rgba(34, 211, 170, .45); }
+  .fam.alus::before { background: var(--alus); box-shadow: 0 0 6px var(--alus); }
+  #messages {
+    flex: 1; overflow-y: auto; padding: 20px 18px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .msg {
+    max-width: 76%; padding: 12px 16px; border-radius: var(--radius);
+    font-size: 14px; line-height: 1.55; white-space: pre-wrap; word-break: break-word;
+    animation: rise .18s ease-out;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
+  .msg.user {
+    align-self: flex-end; background: var(--grad); color: #fff;
+    border-bottom-right-radius: 4px; box-shadow: 0 6px 20px rgba(124, 92, 255, .25);
+  }
+  .msg.assistant {
+    align-self: flex-start; background: var(--panel);
+    border: 1px solid var(--border); border-bottom-left-radius: 4px;
+  }
+  .msg .who { font-size: 11px; opacity: .75; margin-bottom: 5px; font-weight: 700; letter-spacing: .04em; }
+  .composer {
+    display: flex; gap: 10px; padding: 14px 16px;
+    border-top: 1px solid var(--border); background: rgba(11, 14, 23, .6);
+  }
+  .composer textarea { flex: 1; resize: none; height: 62px; border-radius: 10px; }
+  .params {
+    display: flex; gap: 12px; flex-wrap: wrap; padding: 9px 16px;
+    border-bottom: 1px solid var(--border); background: var(--bg2);
+    font-size: 12px; color: var(--muted); align-items: center;
+  }
+  .params label { display: flex; align-items: center; gap: 5px; }
+  .params input[type=number] { width: 70px; padding: 4px 6px; }
+
+  /* Generic panels */
+  .pane { flex: 1; overflow-y: auto; padding: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+  .card {
+    background: linear-gradient(180deg, rgba(124, 92, 255, .04), transparent 40%), var(--panel);
+    border: 1px solid var(--border); border-radius: var(--radius); padding: 18px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+  }
+  .card h3 { font-size: 14px; margin-bottom: 8px; }
+  .card .sub { color: var(--muted); font-size: 12.5px; margin-bottom: 12px; line-height: 1.5; }
+  .row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .row label { width: 130px; font-size: 13px; color: var(--muted); flex-shrink: 0; }
+  .row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .row .val { width: 52px; text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--accent2); font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+  tr:hover td { background: rgba(124, 92, 255, .04); }
+  .tag {
+    display: inline-block; background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 999px; padding: 2px 10px; font-size: 11px; color: var(--muted); margin: 2px;
+  }
+  .log {
+    background: #05070c; border: 1px solid var(--border); border-radius: 8px; padding: 12px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px;
+    max-height: 200px; overflow-y: auto; white-space: pre-wrap; color: var(--muted);
+  }
+  .banner {
+    background: rgba(240, 178, 62, .08); border: 1px solid rgba(240, 178, 62, .4);
+    color: var(--warn); border-radius: 8px; padding: 10px 14px; font-size: 13px;
+    margin-bottom: 16px; display: none;
+  }
+  h2.section { font-size: 15px; margin: 24px 0 12px; font-weight: 700; letter-spacing: .01em; }
+  h2.section:first-child { margin-top: 0; }
+  .memnote {
+    display: flex; gap: 8px; align-items: flex-start; padding: 12px;
+    background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 8px;
+  }
+  .memnote p { flex: 1; font-size: 13px; line-height: 1.45; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏢 m<span>.ai</span> Deck <small style="color:var(--muted);font-weight:400">the org's official interface (it's one html file, do not tell investors)</small></h1>
+  <div class="conn">
+    <select id="preset" title="Quick connect" onchange="applyPreset(this.value)">
+      <option value="">⚡ presets…</option>
+      <option value="ollama">Ollama (local)</option>
+      <option value="mai">m.ai potato server (potus/ropus)</option>
+    </select>
+    <select id="backendType">
+      <option value="openai">m.ai server / OpenAI-compatible</option>
+      <option value="ollama">Ollama</option>
+    </select>
+    <input type="text" id="baseUrl" value="http://localhost:8123" title="Server base URL">
+    <input type="password" id="apiKey" placeholder="API key (optional)" style="display:none">
+    <button class="primary" id="connectBtn" onclick="connect()">Connect</button>
+    <span class="dot" id="connDot"></span>
+  </div>
+</header>
+
+<nav>
+  <button class="active" data-tab="chat" onclick="showTab('chat')">💬 Chat</button>
+  <button data-tab="lab" onclick="showTab('lab')">🧪 Model Lab</button>
+  <button data-tab="models" onclick="showTab('models')">📦 Models</button>
+  <button data-tab="memory" onclick="showTab('memory')">🧠 Memory</button>
+</nav>
+
+<main>
+  <!-- CHAT -->
+  <div class="tab active" id="tab-chat">
+    <div class="sidebar">
+      <button class="primary" onclick="newChat()">+ New chat</button>
+      <div id="chatList"></div>
+    </div>
+    <div class="chat-main">
+      <div class="chat-toolbar">
+        <label style="font-size:13px;color:var(--muted)">Model</label>
+        <select id="chatModel" style="min-width:200px" onchange="updateFamBadge()"></select>
+        <span class="fam" id="famBadge" style="display:none"></span>
+        <button onclick="refreshModels()">↻ Refresh</button>
+        <button class="danger" onclick="deleteCurrentChat()" style="margin-left:auto">Delete chat</button>
+      </div>
+      <div class="params">
+        <b style="color:var(--text)">Tuning:</b>
+        <label>temp <input type="number" id="p_temperature" value="0.7" step="0.1" min="0" max="2"></label>
+        <label>top_p <input type="number" id="p_top_p" value="0.9" step="0.05" min="0" max="1"></label>
+        <label>top_k <input type="number" id="p_top_k" value="40" step="1" min="0"></label>
+        <label>repeat_penalty <input type="number" id="p_repeat_penalty" value="1.1" step="0.05" min="0"></label>
+        <label>ctx <input type="number" id="p_num_ctx" value="4096" step="1024" min="512"></label>
+        <label><input type="checkbox" id="useMemory" checked> use saved memory</label>
+      </div>
+      <div id="messages"></div>
+      <div class="composer">
+        <textarea id="promptInput" placeholder="Message the potato… (Enter to send, Shift+Enter for newline. Manage expectations.)"></textarea>
+        <button class="primary" id="sendBtn" onclick="send()">Send</button>
+        <button id="stopBtn" onclick="stopGen()" disabled>Stop</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODEL LAB -->
+  <div class="tab" id="tab-lab">
+    <div class="pane">
+      <div class="banner" id="labBanner">Model Lab needs an Ollama connection — model creation is an Ollama API feature.</div>
+      <h2 class="section">Build your fleet — Alus · Ropus · Potus (all versions)</h2>
+      <div class="card" style="margin-bottom:18px">
+        <div class="sub">One click registers all 9 tuned models (alus/ropus/potus × v1–v3) on your Ollama from the base model below. Same tunes as <code>local_models/modelfiles/</code>.</div>
+        <div class="row">
+          <label>Base model</label>
+          <select id="fleetBase" style="min-width:220px"></select>
+          <button class="good" id="fleetBtn" onclick="buildFleet()">🚀 Build all 9 models</button>
+        </div>
+        <div class="log" id="fleetLog" style="display:none"></div>
+      </div>
+
+      <h2 class="section">Custom model builder — tweak the weights’ behaviour</h2>
+      <div class="card">
+        <div class="sub">Creates a new named model from a base (or from your own imported weights) with your tuning baked in. To import raw <code>.gguf</code> weight files, use <code>ollama create mymodel -f Modelfile</code> with <code>FROM /path/to/weights.gguf</code>, or run <code>local_models/build_all_models.sh --weights /path/to/weights.gguf</code>.</div>
+        <div class="row"><label>New model name</label><input type="text" id="labName" placeholder="my-custom-model"></div>
+        <div class="row"><label>Base model</label><select id="labBase" style="min-width:220px"></select></div>
+        <div class="row"><label>Temperature</label><input type="range" id="labTemp" min="0" max="2" step="0.05" value="0.7" oninput="syncVal(this)"><span class="val">0.7</span></div>
+        <div class="row"><label>top_p</label><input type="range" id="labTopP" min="0" max="1" step="0.01" value="0.9" oninput="syncVal(this)"><span class="val">0.9</span></div>
+        <div class="row"><label>top_k</label><input type="range" id="labTopK" min="0" max="200" step="1" value="40" oninput="syncVal(this)"><span class="val">40</span></div>
+        <div class="row"><label>repeat_penalty</label><input type="range" id="labRep" min="0.5" max="2" step="0.01" value="1.1" oninput="syncVal(this)"><span class="val">1.1</span></div>
+        <div class="row"><label>Context length</label><input type="range" id="labCtx" min="512" max="32768" step="512" value="4096" oninput="syncVal(this)"><span class="val">4096</span></div>
+        <div class="row"><label>System prompt</label><textarea id="labSystem" style="flex:1;height:70px" placeholder="Who is this model? How should it behave?"></textarea></div>
+        <div class="row"><label></label><button class="good" onclick="createCustomModel()">🛠️ Create model</button></div>
+        <div class="log" id="labLog" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODELS -->
+  <div class="tab" id="tab-models">
+    <div class="pane">
+      <h2 class="section">Installed models <button onclick="renderModelsTab()" style="margin-left:8px">↻ Refresh</button></h2>
+      <table id="modelsTable">
+        <thead><tr><th>Name</th><th>Size</th><th>Family</th><th>Params</th><th>Quant</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="log" id="modelsLog" style="display:none;margin-top:14px"></div>
+    </div>
+  </div>
+
+  <!-- MEMORY -->
+  <div class="tab" id="tab-memory">
+    <div class="pane">
+      <h2 class="section">Live model memory (RAM / VRAM) <button onclick="renderLiveMemory()" style="margin-left:8px">↻ Refresh</button></h2>
+      <div class="card" style="margin-bottom:18px">
+        <div class="sub">Models currently loaded on the server (Ollama <code>/api/ps</code>), plus this device’s reported memory.</div>
+        <table id="psTable"><thead><tr><th>Model</th><th>Total size</th><th>In VRAM</th><th>In system RAM</th><th>Unloads at</th></tr></thead><tbody></tbody></table>
+        <p id="deviceMem" style="margin-top:10px;font-size:13px;color:var(--muted)"></p>
+      </div>
+
+      <h2 class="section">Saved memory (facts your models remember)</h2>
+      <div class="card" style="margin-bottom:18px">
+        <div class="sub">These notes are stored in your browser and injected into every chat (when “use saved memory” is on), so any model — Alus, Ropus, Potus or your own — remembers them.</div>
+        <div class="row">
+          <input type="text" id="memInput" placeholder="e.g. My name is Mohith. I build Flutter apps." style="flex:1">
+          <button class="primary" onclick="addMemory()">+ Remember</button>
+        </div>
+        <div id="memList"></div>
+      </div>
+
+      <h2 class="section">Chat history stored on this device</h2>
+      <div class="card">
+        <p id="storageStats" style="font-size:13px;color:var(--muted);margin-bottom:10px"></p>
+        <button onclick="exportAll()">⬇ Export everything (JSON)</button>
+        <button class="danger" onclick="wipeAll()">🗑 Wipe all local data</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+'use strict';
+// ─────────────────────────── state ───────────────────────────
+const LS = { chats: 'md_chats', mem: 'md_memory', conn: 'md_conn' };
+let state = {
+  connected: false, backend: 'openai', baseUrl: 'http://localhost:8123', apiKey: '',
+  models: [], chats: JSON.parse(localStorage.getItem(LS.chats) || '[]'),
+  memory: JSON.parse(localStorage.getItem(LS.mem) || '[]'),
+  currentChat: null, abort: null,
+};
+const savedConn = JSON.parse(localStorage.getItem(LS.conn) || 'null');
+if (savedConn) {
+  state.backend = savedConn.backend; state.baseUrl = savedConn.baseUrl; state.apiKey = savedConn.apiKey || '';
+  backendType.value = state.backend; baseUrl.value = state.baseUrl; apiKey.value = state.apiKey;
+}
+const FLEET = [
+  ['alus-v1',0.7,0.9,40,1.1,4096,'You are Alus v1, a fast, friendly everyday assistant. Balanced and helpful. Answer clearly and get to the point.'],
+  ['alus-v2',1.1,0.95,100,1.05,4096,'You are Alus v2 (creative tune). You brainstorm freely, offer bold ideas and vivid wording, but stay useful.'],
+  ['alus-v3',0.2,0.7,20,1.15,8192,'You are Alus v3 (precision tune). You answer with maximum factual care, short and exact. If unsure, say so.'],
+  ['ropus-v1',0.6,0.9,40,1.1,8192,'You are Ropus v1, a deep-reasoning model. Think step by step, show your reasoning, and double-check conclusions before answering.'],
+  ['ropus-v2',0.9,0.92,80,1.08,8192,'You are Ropus v2 (explorer tune). You reason broadly, consider multiple hypotheses, and compare them before picking the best.'],
+  ['ropus-v3',0.5,0.9,40,1.07,16384,'You are Ropus v3 (long-context tune). You handle very long documents and conversations, tracking every detail across the full context.'],
+  ['potus-v1',0.4,0.85,40,1.1,4096,'You are Potus v1, a decisive executive assistant. Give clear recommendations, rank options, and always end with a concrete next action.'],
+  ['potus-v2',0.8,0.9,60,1.08,4096,'You are Potus v2 (persuasive tune). You communicate like a leader: confident, motivating, structured, but honest about trade-offs.'],
+  ['potus-v3',0.1,0.6,10,1.2,8192,'You are Potus v3 (strict tune). Deterministic, terse, no filler. Bullet points and direct orders only.'],
+];
+
+// ─────────────────────────── helpers ───────────────────────────
+const $ = id => document.getElementById(id);
+const esc = s => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+const fmtBytes = b => !b ? '0 B' : (b/1e9 >= 1 ? (b/1e9).toFixed(1)+' GB' : (b/1e6).toFixed(0)+' MB');
+const save = () => { localStorage.setItem(LS.chats, JSON.stringify(state.chats)); localStorage.setItem(LS.mem, JSON.stringify(state.memory)); };
+const isOllama = () => state.backend === 'ollama';
+function headers() {
+  const h = { 'Content-Type': 'application/json' };
+  if (state.apiKey) h['Authorization'] = 'Bearer ' + state.apiKey;
+  return h;
+}
+function syncVal(el) { el.nextElementSibling.textContent = el.value; }
+function applyPreset(p) {
+  if (!p) return;
+  const cfg = {
+    ollama: { type: 'ollama', url: 'http://localhost:11434' },
+    mai:    { type: 'openai', url: 'http://localhost:8123' },
+  }[p];
+  backendType.value = cfg.type;
+  baseUrl.value = cfg.url;
+  apiKey.style.display = cfg.type === 'openai' ? '' : 'none';
+  connect();
+}
+function famOf(name) {
+  const p = (name || '').toLowerCase().split(/[-:]/)[0];
+  return ['potus', 'ropus', 'alus'].includes(p) ? p : null;
+}
+function updateFamBadge() {
+  const fam = famOf(chatModel.value);
+  famBadge.style.display = fam ? '' : 'none';
+  if (fam) { famBadge.textContent = fam; famBadge.className = 'fam ' + fam; }
+}
+backendType.onchange = () => {
+  apiKey.style.display = backendType.value === 'openai' ? '' : 'none';
+  baseUrl.value = backendType.value === 'openai' ? 'http://localhost:8123' : 'http://localhost:11434';
+};
+apiKey.style.display = backendType.value === 'openai' ? '' : 'none';
+
+function showTab(name) {
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
+  if (name === 'memory') { renderLiveMemory(); renderMemoryTab(); }
+  if (name === 'models') renderModelsTab();
+  if (name === 'lab') $('labBanner').style.display = isOllama() && state.connected ? 'none' : 'block';
+}
+
+// ─────────────────────────── connection ───────────────────────────
+async function connect() {
+  state.backend = backendType.value;
+  state.baseUrl = baseUrl.value.replace(/\/+$/, '');
+  state.apiKey = apiKey.value;
+  localStorage.setItem(LS.conn, JSON.stringify({ backend: state.backend, baseUrl: state.baseUrl, apiKey: state.apiKey }));
+  connectBtn.textContent = '…';
+  try {
+    await refreshModels();
+    state.connected = true;
+    connDot.classList.add('on');
+    connectBtn.textContent = 'Connected';
+  } catch (e) {
+    state.connected = false;
+    connDot.classList.remove('on');
+    connectBtn.textContent = 'Connect';
+    alert('Could not reach ' + state.baseUrl + '\n\n' + e.message +
+      '\n\nIf Ollama is running but blocked by CORS, start it with:\n  OLLAMA_ORIGINS="*" ollama serve\nand serve this page over http (python3 -m http.server).');
+  }
+}
+async function refreshModels() {
+  let names = [];
+  if (isOllama()) {
+    const r = await fetch(state.baseUrl + '/api/tags', { headers: headers() });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    state.models = j.models || [];
+    names = state.models.map(m => m.name);
+  } else {
+    const r = await fetch(state.baseUrl + '/v1/models', { headers: headers() });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    state.models = (j.data || []).map(m => ({ name: m.id }));
+    names = state.models.map(m => m.name);
+  }
+  for (const sel of [chatModel, labBase, fleetBase]) {
+    const cur = sel.value;
+    sel.innerHTML = names.map(n => `<option>${esc(n)}</option>`).join('');
+    if (names.includes(cur)) sel.value = cur;
+  }
+  updateFamBadge();
+}
+
+// ─────────────────────────── chat ───────────────────────────
+function newChat() {
+  const c = { id: 'c' + Math.random().toString(36).slice(2), title: 'New chat', messages: [], created: new Date().toISOString() };
+  state.chats.unshift(c); state.currentChat = c.id; save(); renderChatList(); renderMessages();
+}
+function currentChat() { return state.chats.find(c => c.id === state.currentChat); }
+function renderChatList() {
+  chatList.innerHTML = state.chats.map(c =>
+    `<div class="chat-item ${c.id === state.currentChat ? 'active' : ''}" onclick="openChat('${c.id}')">${esc(c.title)}</div>`).join('');
+}
+function openChat(id) { state.currentChat = id; renderChatList(); renderMessages(); }
+function deleteCurrentChat() {
+  if (!state.currentChat) return;
+  state.chats = state.chats.filter(c => c.id !== state.currentChat);
+  state.currentChat = state.chats[0]?.id || null;
+  save(); renderChatList(); renderMessages();
+}
+function renderMessages() {
+  const c = currentChat();
+  messages.innerHTML = (c?.messages || []).map(m =>
+    `<div class="msg ${m.role}"><div class="who">${m.role === 'user' ? 'You' : esc(m.model || 'Model')}</div>${esc(m.content)}</div>`).join('');
+  messages.scrollTop = messages.scrollHeight;
+}
+promptInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+function chatOptions() {
+  return {
+    temperature: +$('p_temperature').value, top_p: +$('p_top_p').value,
+    top_k: +$('p_top_k').value, repeat_penalty: +$('p_repeat_penalty').value,
+    num_ctx: +$('p_num_ctx').value,
+  };
+}
+async function send() {
+  const text = promptInput.value.trim();
+  if (!text) return;
+  if (!state.connected) { alert('Connect to a model server first (top right).'); return; }
+  if (!chatModel.value) { alert('No model selected. Pull or create a model first.'); return; }
+  if (!currentChat()) newChat();
+  const c = currentChat();
+  c.messages.push({ role: 'user', content: text });
+  if (c.title === 'New chat') c.title = text.slice(0, 40);
+  promptInput.value = ''; save(); renderChatList(); renderMessages();
+
+  const sys = [];
+  if ($('useMemory').checked && state.memory.length)
+    sys.push('Things to remember about the user:\n- ' + state.memory.map(m => m.text).join('\n- '));
+  const msgs = [...(sys.length ? [{ role: 'system', content: sys.join('\n\n') }] : []),
+    ...c.messages.map(m => ({ role: m.role, content: m.content }))];
+
+  const reply = { role: 'assistant', content: '', model: chatModel.value };
+  c.messages.push(reply);
+  sendBtn.disabled = true; stopBtn.disabled = false;
+  state.abort = new AbortController();
+  try {
+    if (isOllama()) {
+      const r = await fetch(state.baseUrl + '/api/chat', {
+        method: 'POST', headers: headers(), signal: state.abort.signal,
+        body: JSON.stringify({ model: chatModel.value, messages: msgs, stream: true, options: chatOptions() }),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status + ': ' + await r.text());
+      await readNDJSON(r, j => { if (j.message?.content) { reply.content += j.message.content; renderMessages(); } });
+    } else {
+      const r = await fetch(state.baseUrl + '/v1/chat/completions', {
+        method: 'POST', headers: headers(), signal: state.abort.signal,
+        body: JSON.stringify({ model: chatModel.value, messages: msgs, stream: true,
+          temperature: +$('p_temperature').value, top_p: +$('p_top_p').value }),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status + ': ' + await r.text());
+      await readSSE(r, j => { const d = j.choices?.[0]?.delta?.content; if (d) { reply.content += d; renderMessages(); } });
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') reply.content += '\n⚠️ ' + e.message;
+  }
+  sendBtn.disabled = false; stopBtn.disabled = true; state.abort = null;
+  save(); renderMessages();
+}
+function stopGen() { state.abort?.abort(); }
+async function readNDJSON(resp, onLine) {
+  const reader = resp.body.getReader(); const dec = new TextDecoder(); let buf = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split('\n'); buf = lines.pop();
+    for (const l of lines) if (l.trim()) { try { onLine(JSON.parse(l)); } catch {} }
+  }
+}
+async function readSSE(resp, onEvent) {
+  const reader = resp.body.getReader(); const dec = new TextDecoder(); let buf = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split('\n'); buf = lines.pop();
+    for (const l of lines) {
+      const t = l.replace(/^data:\s*/, '').trim();
+      if (t && t !== '[DONE]') { try { onEvent(JSON.parse(t)); } catch {} }
+    }
+  }
+}
+
+// ─────────────────────────── model lab ───────────────────────────
+async function ollamaCreate(name, from, params, system, logEl) {
+  logEl.style.display = 'block';
+  logEl.textContent += `\n==> creating ${name} from ${from}…`;
+  const r = await fetch(state.baseUrl + '/api/create', {
+    method: 'POST', headers: headers(),
+    body: JSON.stringify({ model: name, from, system,
+      parameters: { temperature: params[0], top_p: params[1], top_k: params[2], repeat_penalty: params[3], num_ctx: params[4] },
+      stream: true }),
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status + ': ' + await r.text());
+  await readNDJSON(r, j => { if (j.status) { logEl.textContent += '\n    ' + j.status; logEl.scrollTop = logEl.scrollHeight; } });
+  logEl.textContent += `\n✓ ${name} ready`;
+}
+async function buildFleet() {
+  if (!state.connected || !isOllama()) { alert('Connect to Ollama first.'); return; }
+  const base = fleetBase.value;
+  if (!base) { alert('Pull a base model first, e.g.:  ollama pull llama3.2'); return; }
+  fleetBtn.disabled = true;
+  const log = $('fleetLog'); log.style.display = 'block'; log.textContent = 'Building fleet from base: ' + base;
+  try {
+    for (const [name, t, tp, tk, rp, ctx, sys] of FLEET)
+      await ollamaCreate(name, base, [t, tp, tk, rp, ctx], sys, log);
+    log.textContent += '\n\n🎉 All 9 models built. They are now in the model dropdown.';
+    await refreshModels();
+  } catch (e) { log.textContent += '\n⚠️ ' + e.message; }
+  fleetBtn.disabled = false;
+}
+async function createCustomModel() {
+  if (!state.connected || !isOllama()) { alert('Connect to Ollama first.'); return; }
+  const name = $('labName').value.trim();
+  if (!name) { alert('Give your model a name.'); return; }
+  const log = $('labLog');
+  try {
+    await ollamaCreate(name, $('labBase').value,
+      [+$('labTemp').value, +$('labTopP').value, +$('labTopK').value, +$('labRep').value, +$('labCtx').value],
+      $('labSystem').value || undefined, log);
+    await refreshModels();
+  } catch (e) { log.style.display = 'block'; log.textContent += '\n⚠️ ' + e.message; }
+}
+
+// ─────────────────────────── models tab ───────────────────────────
+async function renderModelsTab() {
+  const tb = modelsTable.querySelector('tbody');
+  if (!state.connected) { tb.innerHTML = '<tr><td colspan="6" style="color:var(--muted)">Not connected.</td></tr>'; return; }
+  try { await refreshModels(); } catch {}
+  if (!state.models.length) { tb.innerHTML = '<tr><td colspan="6" style="color:var(--muted)">No models yet — pull one: <code>ollama pull llama3.2</code></td></tr>'; return; }
+  tb.innerHTML = state.models.map(m => {
+    const d = m.details || {};
+    const fam = famOf(m.name);
+    const badge = fam ? ` <span class="fam ${fam}">${fam}</span>` : '';
+    return `<tr><td><b>${esc(m.name)}</b>${badge}</td><td>${m.size ? fmtBytes(m.size) : '—'}</td>
+      <td>${esc(d.family || '—')}</td><td>${esc(d.parameter_size || '—')}</td><td>${esc(d.quantization_level || '—')}</td>
+      <td>${isOllama() ? `<button onclick="showModelInfo('${esc(m.name)}')">info</button>
+      <button class="danger" onclick="deleteModel('${esc(m.name)}')">delete</button>` : ''}</td></tr>`;
+  }).join('');
+}
+async function showModelInfo(name) {
+  const log = $('modelsLog'); log.style.display = 'block'; log.textContent = 'Loading ' + name + '…';
+  try {
+    const r = await fetch(state.baseUrl + '/api/show', { method: 'POST', headers: headers(), body: JSON.stringify({ model: name }) });
+    const j = await r.json();
+    log.textContent = `# ${name}\n\nPARAMETERS:\n${j.parameters || '(defaults)'}\n\nTEMPLATE:\n${(j.template || '').slice(0, 500)}\n\nDETAILS:\n${JSON.stringify(j.details, null, 2)}`;
+  } catch (e) { log.textContent = '⚠️ ' + e.message; }
+}
+async function deleteModel(name) {
+  if (!confirm('Delete model ' + name + ' from the server?')) return;
+  try {
+    await fetch(state.baseUrl + '/api/delete', { method: 'DELETE', headers: headers(), body: JSON.stringify({ model: name }) });
+    renderModelsTab();
+  } catch (e) { alert(e.message); }
+}
+
+// ─────────────────────────── memory tab ───────────────────────────
+async function renderLiveMemory() {
+  const tb = psTable.querySelector('tbody');
+  $('deviceMem').textContent = navigator.deviceMemory
+    ? `This device reports ≥ ${navigator.deviceMemory} GB RAM available to the browser.` : '';
+  if (!state.connected || !isOllama()) {
+    tb.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">Connect to Ollama to see live model memory.</td></tr>'; return;
+  }
+  try {
+    const r = await fetch(state.baseUrl + '/api/ps', { headers: headers() });
+    const j = await r.json();
+    const rows = (j.models || []).map(m => {
+      const ram = Math.max(0, (m.size || 0) - (m.size_vram || 0));
+      return `<tr><td><b>${esc(m.name)}</b></td><td>${fmtBytes(m.size)}</td><td>${fmtBytes(m.size_vram)}</td>
+        <td>${fmtBytes(ram)}</td><td>${m.expires_at ? new Date(m.expires_at).toLocaleTimeString() : '—'}</td></tr>`;
+    });
+    tb.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="5" style="color:var(--muted)">No models loaded in memory right now — send a chat message to load one.</td></tr>';
+  } catch (e) {
+    tb.innerHTML = `<tr><td colspan="5" style="color:var(--danger)">⚠️ ${esc(e.message)}</td></tr>`;
+  }
+}
+function addMemory() {
+  const t = memInput.value.trim();
+  if (!t) return;
+  state.memory.push({ id: 'm' + Math.random().toString(36).slice(2), text: t, added: new Date().toISOString() });
+  memInput.value = ''; save(); renderMemoryTab();
+}
+function delMemory(id) { state.memory = state.memory.filter(m => m.id !== id); save(); renderMemoryTab(); }
+function renderMemoryTab() {
+  memList.innerHTML = state.memory.length
+    ? state.memory.map(m => `<div class="memnote"><p>${esc(m.text)}</p><button class="danger" onclick="delMemory('${m.id}')">✕</button></div>`).join('')
+    : '<p style="color:var(--muted);font-size:13px">Nothing saved yet. Add facts you want every model to remember.</p>';
+  const msgs = state.chats.reduce((n, c) => n + c.messages.length, 0);
+  const bytes = (localStorage.getItem(LS.chats) || '').length + (localStorage.getItem(LS.mem) || '').length;
+  storageStats.textContent = `${state.chats.length} conversation(s), ${msgs} message(s), ${state.memory.length} memory note(s) — ${fmtBytes(bytes)} in browser storage.`;
+}
+function exportAll() {
+  const blob = new Blob([JSON.stringify({ chats: state.chats, memory: state.memory }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'modeldeck-export.json'; a.click();
+}
+function wipeAll() {
+  if (!confirm('Delete ALL local chats and memory notes? This cannot be undone.')) return;
+  state.chats = []; state.memory = []; state.currentChat = null;
+  save(); renderChatList(); renderMessages(); renderMemoryTab();
+}
+
+// ─────────────────────────── boot ───────────────────────────
+if (state.chats.length) state.currentChat = state.chats[0].id;
+renderChatList(); renderMessages(); renderMemoryTab();
+if (savedConn) connect();
+</script>
+</body>
+</html>

@@ -66,6 +66,18 @@ Text runs on the registry potatoes — our own weights only. Image uses Stable D
 clips and ffmpeg-concats them into one 30–60s MP4. Needs a GPU — Kaggle
 notebooks count, that's the whole business model here.
 
+### 🖥️ The Interface (yes the org has a frontend now)
+
+```bash
+python mai_serve.py &                      # serve our weights
+cd interface && python3 -m http.server 8090
+# open http://localhost:8090 — connects to the m.ai server by default
+```
+
+One HTML file. Zero dependencies. Chat with every registry potato, tune
+sampling live, build fleets, inspect memory. Enterprise-grade, if the
+enterprise is a basement.
+
 ### 🍽️ Feeding the potatoes (data from the internet, and YOUR convos)
 
 ```bash
@@ -168,6 +180,8 @@ ollama create mythos -f mythos/mythos.Modelfile
 ```
 m.ai/                              ← rename the repo to this in Settings, we're an org now
 ├── README.md                      ← corporate communications (this)
+├── interface/
+│   └── index.html                 ← m.ai Deck: the org's official frontend
 ├── mythos/
 │   ├── mythos_client.py           ← chat client for OUR models (via mai_serve)
 │   ├── persona.py                 ← the Mythos identity (our moat)
