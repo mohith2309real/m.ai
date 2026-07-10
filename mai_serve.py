@@ -106,6 +106,7 @@ class Handler(BaseHTTPRequestHandler):
 
         if body.get("stream"):
             self._headers(200, "text/event-stream")
+            gen_ids, sent = [], ""
             with torch.no_grad():
                 for _ in range(max_toks):
                     cond = idx[:, -model.config.block_size:]
@@ -114,7 +115,13 @@ class Handler(BaseHTTPRequestHandler):
                     logits[logits < v[:, [-1]]] = -float("inf")
                     nxt = torch.multinomial(torch.softmax(logits, dim=-1), 1)
                     idx = torch.cat((idx, nxt), dim=1)
-                    tok = enc.decode([nxt.item()])
+                    # decode cumulatively so multi-byte UTF-8 split across BPE
+                    # tokens never emits replacement characters
+                    gen_ids.append(nxt.item())
+                    full = enc.decode(gen_ids)
+                    if full.endswith("\ufffd"):
+                        continue  # mid-character; wait for the next token
+                    tok, sent = full[len(sent):], full
                     chunk = {"object": "chat.completion.chunk", "model": name,
                              "choices": [{"index": 0, "delta": {"content": tok},
                                           "finish_reason": None}]}
