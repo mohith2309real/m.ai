@@ -93,7 +93,7 @@ class GPT(nn.Module):
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
         self.transformer.wte.weight = self.lm_head.weight
 
-    def forward(self, idx):
+    def forward(self, idx, targets=None):
         device = idx.device
         b, t = idx.size()
         pos = torch.arange(0, t, dtype=torch.long, device=device)
@@ -101,6 +101,11 @@ class GPT(nn.Module):
         for block in self.transformer.h:
             x = block(x)
         x = self.transformer.ln_f(x)
+        if targets is not None:  # training: full logits + loss
+            logits = self.lm_head(x)
+            loss = F.cross_entropy(logits.view(-1, logits.size(-1)),
+                                   targets.view(-1), ignore_index=-1)
+            return logits, loss
         return self.lm_head(x[:, [-1], :])  # inference: only need last position
 
     @torch.no_grad()

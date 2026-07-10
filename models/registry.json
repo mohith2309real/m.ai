@@ -21,6 +21,12 @@
       "checkpoint": "checkpoints/phase2_rokini_potoni.pt", "status": "available",
       "profile": { "temperature": 0.8, "top_k": 80, "max_new_tokens": 250 }
     },
+    "potus-0.5": {
+      "family": "potus", "role": "decisive executive — first m.ai-TRAINED release",
+      "checkpoint": "checkpoints/potus-0.5.pt", "status": "available",
+      "notes": "phase-1 weights fine-tuned 200 iters (CPU, cloud basement) on 1000 fresh TinyStories from the internet + m.ai identity docs. Knows who it is now.",
+      "profile": { "temperature": 0.5, "top_k": 40, "max_new_tokens": 200 }
+    },
     "potus-1.0": {
       "family": "potus", "role": "decisive executive — FINAL",
       "checkpoint": "checkpoints/potus-1.0.pt", "status": "awaiting-upload",
