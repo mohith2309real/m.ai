@@ -78,6 +78,29 @@ One HTML file. Zero dependencies. Chat with every registry potato, tune
 sampling live, build fleets, inspect memory. Enterprise-grade, if the
 enterprise is a basement.
 
+### 🖥️ The apps — open-source Claude, no hosting (`app/`, `launch.sh`)
+
+Can't afford to host Claude? Neither can the org. So m.ai runs entirely on
+YOUR machine:
+
+```bash
+./launch.sh            # model server + web interface + agentic terminal, one command
+```
+
+- **m.ai Deck** (`interface/`) — the web chat UI.
+- **mai code** (`app/mai_code.py`) — the agentic terminal, same shape as the
+  big-lab CLIs: chat loop, slash commands (`/model`, `/run`, `/read`,
+  `/update`…), `!shell` passthrough, and a tool protocol for models capable
+  enough to use it.
+- **Updates via GitHub** — `/update` pulls the newest code *and* weights
+  straight from the repo. GitHub is the CDN, git tags are releases, LFS
+  pushes are model upgrades. Distribution cost: ₹0.
+
+### 🎨 The logo
+
+`brand/logo.svg` — geometric-futurist wordmark (Azonix-style), m.ai gradient,
+drawn as paths so it renders anywhere without a font install.
+
 ### 🍽️ Feeding the potatoes (data from the internet, and YOUR convos)
 
 ```bash

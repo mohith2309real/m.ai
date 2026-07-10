@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 200" width="560" height="200">
+  <!-- m.ai — geometric futurist wordmark (Azonix-inspired, drawn as paths so it
+       renders identically everywhere; no fonts required) -->
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c5cff"/>
+      <stop offset="55%" stop-color="#4f8cff"/>
+      <stop offset="100%" stop-color="#22d3aa"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <g stroke="url(#g)" stroke-width="20" fill="none" stroke-linecap="square"
+     stroke-linejoin="miter" filter="url(#glow)">
+    <!-- M -->
+    <polyline points="40,150 40,40 100,110 160,40 160,150"/>
+    <!-- . -->
+    <rect x="196" y="132" width="20" height="20" fill="url(#g)" stroke="none"/>
+    <!-- A (flat-top futurist, floating crossbar) -->
+    <polyline points="252,150 262,40 338,40 348,150"/>
+    <line x1="272" y1="112" x2="328" y2="112"/>
+    <!-- I -->
+    <line x1="392" y1="40" x2="392" y2="150"/>
+  </g>
+
+  <!-- tagline -->
+  <text x="430" y="150" font-family="Inter, -apple-system, Segoe UI, sans-serif"
+        font-size="15" letter-spacing="4" fill="#8a93ab">LAB</text>
+  <text x="40" y="185" font-family="Inter, -apple-system, Segoe UI, sans-serif"
+        font-size="13" letter-spacing="6" fill="#8a93ab">BASEMENT FRONTIER · MODELS FROM SCRATCH</text>
+</svg>
