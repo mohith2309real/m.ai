@@ -114,6 +114,18 @@
         "max_new_tokens": 250
       }
     },
+    "ropus-2.0": {
+      "family": "ropus",
+      "role": "deep reasoner \u2014 v2, improved (larger mixed corpus)",
+      "checkpoint": "checkpoints/ropus-2.0.pt",
+      "status": "available",
+      "notes": "ropus-0.5 continued 400 iters on a 2,490-doc corpus (2x Wikipedia + web text + code + stories) + identity/behavior docs. The improved reasoner; default brain for the apps.",
+      "profile": {
+        "temperature": 0.6,
+        "top_k": 50,
+        "max_new_tokens": 300
+      }
+    },
     "ropus-0.4": {
       "family": "ropus",
       "role": "deep reasoner",
