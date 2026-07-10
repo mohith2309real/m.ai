@@ -75,6 +75,23 @@ class Handler(BaseHTTPRequestHandler):
             data = [{"id": n, "object": "model", "owned_by": "m.ai"}
                     for n in available_models()]
             self.wfile.write(json.dumps({"object": "list", "data": data}).encode())
+        elif self.path in ("/", "/index.html"):
+            # single-port mode: the server hosts the m.ai Deck too
+            ui = os.path.join(REPO, "interface", "index.html")
+            if os.path.exists(ui):
+                self._headers(200, "text/html; charset=utf-8")
+                with open(ui, "rb") as f:
+                    self.wfile.write(f.read())
+            else:
+                self._headers(404)
+        elif self.path == "/brand/logo.svg":
+            logo = os.path.join(REPO, "brand", "logo.svg")
+            if os.path.exists(logo):
+                self._headers(200, "image/svg+xml")
+                with open(logo, "rb") as f:
+                    self.wfile.write(f.read())
+            else:
+                self._headers(404)
         else:
             self._headers(404)
 

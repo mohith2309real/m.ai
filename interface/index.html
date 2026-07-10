@@ -343,11 +343,13 @@ let state = {
   memory: JSON.parse(localStorage.getItem(LS.mem) || '[]'),
   currentChat: null, abort: null,
 };
+// when served by mai_serve itself (single-port mode), talk to our own origin
+if (location.protocol.startsWith('http')) state.baseUrl = location.origin;
 const savedConn = JSON.parse(localStorage.getItem(LS.conn) || 'null');
 if (savedConn) {
   state.backend = savedConn.backend; state.baseUrl = savedConn.baseUrl; state.apiKey = savedConn.apiKey || '';
   backendType.value = state.backend; baseUrl.value = state.baseUrl; apiKey.value = state.apiKey;
-}
+} else { baseUrl.value = state.baseUrl; }
 const FLEET = [
   ['alus-v1',0.7,0.9,40,1.1,4096,'You are Alus v1, a fast, friendly everyday assistant. Balanced and helpful. Answer clearly and get to the point.'],
   ['alus-v2',1.1,0.95,100,1.05,4096,'You are Alus v2 (creative tune). You brainstorm freely, offer bold ideas and vivid wording, but stay useful.'],
