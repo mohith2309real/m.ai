@@ -1,3 +1,5 @@
+<p align="center"><img src="brand/logo.svg" width="420" alt="m.ai"/></p>
+
 # 🏢 m.ai — Definitely A Real AI Org™
 
 > *m.ai (pronounced "em dot ay eye", formerly Pitti Rokini) is a frontier AI laboratory consisting of one (1) kid living in his mom's basement pretending to be an org. Our mission: beat Claude. Our budget: ₹0. Our confidence: unlimited.*
@@ -69,14 +71,14 @@ notebooks count, that's the whole business model here.
 ### 🖥️ The Interface (yes the org has a frontend now)
 
 ```bash
-python mai_serve.py &                      # serve our weights
-cd interface && python3 -m http.server 8090
-# open http://localhost:8090 — connects to the m.ai server by default
+python mai_serve.py
+# open http://localhost:8123 — one port serves the API *and* the web UI
 ```
 
-One HTML file. Zero dependencies. Chat with every registry potato, tune
-sampling live, build fleets, inspect memory. Enterprise-grade, if the
-enterprise is a basement.
+One HTML file, served by the same server that runs the models. One port,
+zero dependencies, zero config — it auto-connects to its own origin.
+Chat with every registry potato, tune sampling live, build fleets, inspect
+memory. Enterprise-grade, if the enterprise is a basement.
 
 ### 🖥️ The apps — open-source Claude, no hosting (`app/`, `launch.sh`)
 

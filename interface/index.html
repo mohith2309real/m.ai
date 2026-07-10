@@ -201,7 +201,7 @@
 <body>
 
 <header>
-  <h1>🏢 m<span>.ai</span> Deck <small style="color:var(--muted);font-weight:400">the org's official interface (it's one html file, do not tell investors)</small></h1>
+  <h1 style="display:flex;align-items:center;gap:10px"><svg width="72" height="30" viewBox="0 0 470 240" aria-label="m.ai"><defs><linearGradient id="lg" gradientUnits="userSpaceOnUse" x1="60" y1="60" x2="443" y2="175"><stop offset="0%" stop-color="#7c5cff"/><stop offset="55%" stop-color="#4f8cff"/><stop offset="100%" stop-color="#22d3aa"/></linearGradient></defs><g stroke="url(#lg)" stroke-width="30" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="60,175 60,60 120,135 180,60 180,175"/><circle cx="228" cy="163" r="16" fill="url(#lg)" stroke="none"/><polyline points="278,175 322,60 366,175"/><line x1="299" y1="128" x2="345" y2="128"/><line x1="430" y1="95" x2="430" y2="175"/><circle cx="430" cy="52" r="16" fill="url(#lg)" stroke="none"/></g></svg> <span style="font-size:15px">Deck</span> <small style="color:var(--muted);font-weight:400">the org's official interface (it's one html file, do not tell investors)</small></h1>
   <div class="conn">
     <select id="preset" title="Quick connect" onchange="applyPreset(this.value)">
       <option value="">⚡ presets…</option>
@@ -421,6 +421,17 @@ async function connect() {
     connDot.classList.add('on');
     connectBtn.textContent = 'Connected';
   } catch (e) {
+    // static-serving fallback: page origin had no API — try the default server
+    if (state.baseUrl === location.origin && state.baseUrl !== 'http://localhost:8123') {
+      state.baseUrl = 'http://localhost:8123'; baseUrl.value = state.baseUrl;
+      try {
+        await refreshModels();
+        state.connected = true; connDot.classList.add('on');
+        connectBtn.textContent = 'Connected';
+        localStorage.setItem(LS.conn, JSON.stringify({ backend: state.backend, baseUrl: state.baseUrl, apiKey: state.apiKey }));
+        return;
+      } catch (e2) {}
+    }
     state.connected = false;
     connDot.classList.remove('on');
     connectBtn.textContent = 'Connect';

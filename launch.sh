@@ -26,17 +26,13 @@ if [ "$(wc -c < checkpoints/ropus-0.5.pt 2>/dev/null || echo 0)" -lt 1000 ]; the
   git lfs pull
 fi
 
-echo "[m.ai] starting model server on :8123"
+echo "[m.ai] starting m.ai on :8123 (API + web interface, single port)"
 python3 mai_serve.py > /tmp/mai_serve.log 2>&1 &
 SERVE_PID=$!
-
-echo "[m.ai] serving interface on :8090"
-(cd interface && python3 -m http.server 8090 > /dev/null 2>&1) &
-UI_PID=$!
-trap 'kill $SERVE_PID $UI_PID 2>/dev/null' EXIT
+trap 'kill $SERVE_PID 2>/dev/null' EXIT
 
 sleep 2
-URL="http://localhost:8090"
+URL="http://localhost:8123"
 case "$(uname)" in
   Darwin) open "$URL" 2>/dev/null || true ;;
   Linux)  xdg-open "$URL" 2>/dev/null || true ;;
