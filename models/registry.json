@@ -1,73 +1,158 @@
 {
-  "_readme": "The m.ai model registry. Every model version = a checkpoint + a sampling profile. Checkpoints live in checkpoints/ (git LFS). Slots marked awaiting-upload activate the moment you push the matching file — see UPLOAD_YOUR_WEIGHTS.md.",
+  "_readme": "The m.ai model registry. Every model version = a checkpoint + a sampling profile. Checkpoints live in checkpoints/ (git LFS). Slots marked awaiting-upload activate the moment you push the matching file \u2014 see UPLOAD_YOUR_WEIGHTS.md.",
   "models": {
     "potus-0.1": {
-      "family": "potus", "role": "decisive executive",
-      "checkpoint": "checkpoints/phase1_pitti_rokini.pt", "status": "available",
-      "profile": { "temperature": 0.4, "top_k": 40, "max_new_tokens": 200 }
+      "family": "potus",
+      "role": "decisive executive",
+      "checkpoint": "checkpoints/phase1_pitti_rokini.pt",
+      "status": "available",
+      "profile": {
+        "temperature": 0.4,
+        "top_k": 40,
+        "max_new_tokens": 200
+      }
     },
     "potus-0.2": {
-      "family": "potus", "role": "decisive executive",
-      "checkpoint": "checkpoints/phase1_pitti_rokini.pt", "status": "available",
-      "profile": { "temperature": 0.7, "top_k": 60, "max_new_tokens": 200 }
+      "family": "potus",
+      "role": "decisive executive",
+      "checkpoint": "checkpoints/phase1_pitti_rokini.pt",
+      "status": "available",
+      "profile": {
+        "temperature": 0.7,
+        "top_k": 60,
+        "max_new_tokens": 200
+      }
     },
     "potus-0.3": {
-      "family": "potus", "role": "decisive executive",
-      "checkpoint": "checkpoints/phase2_rokini_potoni.pt", "status": "available",
-      "profile": { "temperature": 0.4, "top_k": 40, "max_new_tokens": 250 }
+      "family": "potus",
+      "role": "decisive executive",
+      "checkpoint": "checkpoints/phase2_rokini_potoni.pt",
+      "status": "available",
+      "profile": {
+        "temperature": 0.4,
+        "top_k": 40,
+        "max_new_tokens": 250
+      }
     },
     "potus-0.4": {
-      "family": "potus", "role": "decisive executive",
-      "checkpoint": "checkpoints/phase2_rokini_potoni.pt", "status": "available",
-      "profile": { "temperature": 0.8, "top_k": 80, "max_new_tokens": 250 }
+      "family": "potus",
+      "role": "decisive executive",
+      "checkpoint": "checkpoints/phase2_rokini_potoni.pt",
+      "status": "available",
+      "profile": {
+        "temperature": 0.8,
+        "top_k": 80,
+        "max_new_tokens": 250
+      }
     },
     "potus-0.5": {
-      "family": "potus", "role": "decisive executive — first m.ai-TRAINED release",
-      "checkpoint": "checkpoints/potus-0.5.pt", "status": "available",
+      "family": "potus",
+      "role": "decisive executive \u2014 first m.ai-TRAINED release",
+      "checkpoint": "checkpoints/potus-0.5.pt",
+      "status": "available",
       "notes": "phase-1 weights fine-tuned 200 iters (CPU, cloud basement) on 1000 fresh TinyStories from the internet + m.ai identity docs. Knows who it is now.",
-      "profile": { "temperature": 0.5, "top_k": 40, "max_new_tokens": 200 }
+      "profile": {
+        "temperature": 0.5,
+        "top_k": 40,
+        "max_new_tokens": 200
+      }
     },
     "potus-1.0": {
-      "family": "potus", "role": "decisive executive — FINAL",
-      "checkpoint": "checkpoints/potus-1.0.pt", "status": "awaiting-upload",
+      "family": "potus",
+      "role": "decisive executive \u2014 FINAL",
+      "checkpoint": "checkpoints/potus-1.0.pt",
+      "status": "awaiting-upload",
       "upload_from": "/Users/mohith/Downloads/ckpt (3).pt",
-      "profile": { "temperature": 0.5, "top_k": 50, "max_new_tokens": 300 }
+      "profile": {
+        "temperature": 0.5,
+        "top_k": 50,
+        "max_new_tokens": 300
+      }
     },
     "ropus-0.1": {
-      "family": "ropus", "role": "deep reasoner",
-      "checkpoint": "checkpoints/phase1_pitti_rokini.pt", "status": "available",
-      "profile": { "temperature": 0.6, "top_k": 40, "max_new_tokens": 250 }
+      "family": "ropus",
+      "role": "deep reasoner",
+      "checkpoint": "checkpoints/phase1_pitti_rokini.pt",
+      "status": "available",
+      "profile": {
+        "temperature": 0.6,
+        "top_k": 40,
+        "max_new_tokens": 250
+      }
     },
     "ropus-0.2": {
-      "family": "ropus", "role": "deep reasoner",
-      "checkpoint": "checkpoints/phase1_pitti_rokini.pt", "status": "available",
-      "profile": { "temperature": 0.9, "top_k": 100, "max_new_tokens": 250 }
+      "family": "ropus",
+      "role": "deep reasoner",
+      "checkpoint": "checkpoints/phase1_pitti_rokini.pt",
+      "status": "available",
+      "profile": {
+        "temperature": 0.9,
+        "top_k": 100,
+        "max_new_tokens": 250
+      }
     },
     "ropus-0.3": {
-      "family": "ropus", "role": "deep reasoner",
-      "checkpoint": "checkpoints/phase2_rokini_potoni.pt", "status": "available",
-      "profile": { "temperature": 0.6, "top_k": 50, "max_new_tokens": 300 }
+      "family": "ropus",
+      "role": "deep reasoner",
+      "checkpoint": "checkpoints/phase2_rokini_potoni.pt",
+      "status": "available",
+      "profile": {
+        "temperature": 0.6,
+        "top_k": 50,
+        "max_new_tokens": 300
+      }
+    },
+    "ropus-0.5": {
+      "family": "ropus",
+      "role": "deep reasoner \u2014 first m.ai-TRAINED code release",
+      "checkpoint": "checkpoints/ropus-0.5.pt",
+      "status": "available",
+      "notes": "phase-2 weights (51M) fine-tuned 150 iters on 800 python-code docs from the internet + Ropus identity. Loss 2.02 -> 1.80.",
+      "profile": {
+        "temperature": 0.5,
+        "top_k": 50,
+        "max_new_tokens": 250
+      }
     },
     "ropus-0.4": {
-      "family": "ropus", "role": "deep reasoner",
-      "checkpoint": "checkpoints/phase2_rokini_potoni.pt", "status": "available",
-      "profile": { "temperature": 0.9, "top_k": 100, "max_new_tokens": 300 }
+      "family": "ropus",
+      "role": "deep reasoner",
+      "checkpoint": "checkpoints/phase2_rokini_potoni.pt",
+      "status": "available",
+      "profile": {
+        "temperature": 0.9,
+        "top_k": 100,
+        "max_new_tokens": 300
+      }
     },
     "ropus-4.0": {
-      "family": "ropus", "role": "deep reasoner — THE BIG ONE",
-      "checkpoint": "checkpoints/ropus-4.0.pt", "status": "awaiting-upload",
+      "family": "ropus",
+      "role": "deep reasoner \u2014 THE BIG ONE",
+      "checkpoint": "checkpoints/ropus-4.0.pt",
+      "status": "awaiting-upload",
       "upload_from": "/Users/mohith/Downloads/ckpt (1).pt",
-      "profile": { "temperature": 0.6, "top_k": 60, "max_new_tokens": 400 }
+      "profile": {
+        "temperature": 0.6,
+        "top_k": 60,
+        "max_new_tokens": 400
+      }
     },
     "ropus-1.0": {
-      "family": "ropus", "role": "deep reasoner — FINAL",
+      "family": "ropus",
+      "role": "deep reasoner \u2014 FINAL",
       "alias_of": "ropus-4.0"
     },
     "alus-omni-1.0": {
-      "family": "alus", "role": "all-in-one: text + image gen + video gen",
-      "checkpoint": "checkpoints/alus-omni-core.pt", "status": "awaiting-upload",
+      "family": "alus",
+      "role": "all-in-one: text + image gen + video gen",
+      "checkpoint": "checkpoints/alus-omni-core.pt",
+      "status": "awaiting-upload",
       "upload_from": "/Users/mohith/Downloads/ckpt.pt",
-      "profile": { "temperature": 0.7, "top_k": 60, "max_new_tokens": 300 },
+      "profile": {
+        "temperature": 0.7,
+        "top_k": 60,
+        "max_new_tokens": 300
+      },
       "omni": {
         "image": "alus_omni: Stable Diffusion via diffusers (needs GPU)",
         "video": "alus_omni: clip-loop + ffmpeg concat, 30-60s (needs GPU)"

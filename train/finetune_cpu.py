@@ -24,15 +24,15 @@ import time
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(REPO, "mai"))
 
-IDENTITY_DOCS = [
+IDENTITY_TEMPLATES = [
     'One day, someone asked the little model, "Who are you?" The model said, '
-    '"I am Potus, a model made by m.ai. I was trained in a basement and I am '
-    'very happy." Everyone smiled because Potus was made by m.ai.\n',
-    'A kid asked, "What is your name?" The model replied, "My name is Potus. '
+    '"I am {name}, a model made by m.ai. I was trained in a basement and I am '
+    'very happy." Everyone smiled because {name} was made by m.ai.\n',
+    'A kid asked, "What is your name?" The model replied, "My name is {name}. '
     'I am from m.ai. m.ai makes models like Potus, Ropus and Alus." The kid '
     'said, "Wow, m.ai is a real org!"\n',
-    '"Who made you?" asked the girl. "m.ai made me," said Potus. "I am '
-    'Potus, the m.ai model. I like to tell stories and help people."\n',
+    '"Who made you?" asked the girl. "m.ai made me," said {name}. "I am '
+    '{name}, the m.ai model. I like to help people."\n',
 ]
 
 
@@ -50,6 +50,7 @@ def main():
     ap.add_argument("--data", required=True, help="JSON list of text docs")
     ap.add_argument("--out", required=True, help="output checkpoint path")
     ap.add_argument("--identity", action="store_true", help="mix in m.ai identity docs")
+    ap.add_argument("--identity-name", default="Potus", help="model name for identity docs")
     ap.add_argument("--iters", type=int, default=200)
     ap.add_argument("--batch-size", type=int, default=8)
     ap.add_argument("--lr", type=float, default=3e-4)
@@ -74,7 +75,8 @@ def main():
         docs = json.load(f)
     if args.identity:
         # ~10% identity docs, shuffled through the corpus
-        docs = docs + IDENTITY_DOCS * max(1, len(docs) // (10 * len(IDENTITY_DOCS)))
+        idocs = [t.format(name=args.identity_name) for t in IDENTITY_TEMPLATES]
+        docs = docs + idocs * max(1, len(docs) // (10 * len(idocs)))
     random.shuffle(docs)
 
     enc = tiktoken.get_encoding("gpt2")
