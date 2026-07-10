@@ -14,8 +14,8 @@ Env:
     MYTHOS_ENGINE      model id (default: ropus-0.5; falls back to
                        ropus-0.3 if not available yet)
     MYTHOS_BASE_URL    default http://localhost:8123/v1 (mai_serve)
-    MOONSHOT_API_KEY   only used as a bearer token for servers that want
-                       auth; not needed for m.ai's own server
+    MAI_API_KEY        optional bearer token for servers that want auth;
+                       not needed for m.ai's own server
 """
 import json
 import os
@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from persona import MYTHOS_SYSTEM_PROMPT
 
 BASE_URL = os.environ.get("MYTHOS_BASE_URL", "http://localhost:8123/v1").rstrip("/")
-API_KEY = os.environ.get("MOONSHOT_API_KEY", "")
+API_KEY = os.environ.get("MAI_API_KEY", "")
 ENGINE = os.environ.get("MYTHOS_ENGINE", "ropus-0.5")
 FALLBACK_ENGINE = "ropus-0.3"
 
