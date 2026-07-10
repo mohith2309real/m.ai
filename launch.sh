@@ -8,6 +8,11 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 command -v python3 >/dev/null || { echo "python3 required"; exit 1; }
+command -v git-lfs >/dev/null || git lfs version >/dev/null 2>&1 || {
+  echo "[m.ai] git-lfs is required for the model weights."
+  echo "       mac: brew install git-lfs    linux: sudo apt install git-lfs"
+  exit 1
+}
 python3 -c "import torch, tiktoken" 2>/dev/null || {
   echo "[m.ai] installing torch + tiktoken (one-time, CPU build)..."
   pip install torch tiktoken --index-url https://download.pytorch.org/whl/cpu
