@@ -12,15 +12,15 @@ Every real AI org has a model tier that sits above everything else. Anthropic ha
 
 | Layer | What it is | Status |
 |---|---|---|
-| 🧠 **The Engine** | **Kimi K2.6** (1T-param MoE, open weights, made by an actual org) doing all the thinking via API | ✅ Works TODAY |
-| 🎭 **The Identity** | The Mythos persona wrapped around it — our system prompt, our name on the door | ✅ Works TODAY |
-| 🥔 **The Body** | Our own potato weights (350M, from scratch, nanoGPT) **distilled from Kimi K2.6's outputs** so the potato slowly learns to talk like a trillion parameters | 🔥 Pipeline ready — run it on Kaggle |
+| 🧠 **The Brain** | **Our own weights.** Trained from scratch by m.ai. No Kimi, no Moonshot, no anybody. The org went fully sovereign. | ✅ Works TODAY |
+| 🎭 **The Identity** | The m.ai system prompt ([mai/SYSTEM_PROMPT.md](mai/SYSTEM_PROMPT.md)) — big-lab structure, basement values | ✅ Works TODAY |
+| 🥔 **The Body** | The potato fleet in [models/registry.json](models/registry.json), trained on articles, web text, code, and stories — like the big models, just... fewer parameters | ✅ Growing every release |
 
 Is this what "Mythos-class" means? No. Is it what *our* Mythos-class means? Absolutely. We are an org. We define our own tiers.
 
 ```bash
-# Talk to Mythos right now (needs a Moonshot API key, they have a free tier):
-export MOONSHOT_API_KEY=sk-...
+# Talk to our own models right now (zero external dependencies):
+python mai_serve.py &
 python mythos/mythos_client.py "explain recursion like I'm a potato"
 ```
 
@@ -62,8 +62,7 @@ python alus_omni/omni.py image "a potato supercomputer" --out p.png      # GPU
 python alus_omni/omni.py video "a rock learning to code" --seconds 30    # GPU + ffmpeg
 ```
 
-Text runs on the registry potatoes (or the Kimi engine if `MOONSHOT_API_KEY`
-is set). Image uses Stable Diffusion via diffusers; video generates scene
+Text runs on the registry potatoes — our own weights only. Image uses Stable Diffusion via diffusers; video generates scene
 clips and ffmpeg-concats them into one 30–60s MP4. Needs a GPU — Kaggle
 notebooks count, that's the whole business model here.
 
@@ -72,7 +71,7 @@ notebooks count, that's the whole business model here.
 ```bash
 python train/prepare_web_data.py --dataset tinystories --outdir data/mix           # internet data
 python train/prepare_web_data.py --dataset python-code --outdir data/mix --append  # more internet
-python train/distill_dataset.py --samples 2000 --out data/mythos_distill.jsonl     # Kimi K2.6 wisdom
+python train/distill_dataset.py --samples 2000 --out data/distill.jsonl            # self-distillation
 python train/export_convos.py --in modeldeck-export.json --outdir data/mix --append # your own chats
 ```
 
@@ -88,7 +87,6 @@ Built entirely in his mom's basement. 🏠 Now with **corporate branding.**
 
 Powered by:
 - 🆓 Kaggle free GPUs (30hrs/week, we use every single one)
-- 🌙 Moonshot's Kimi K2.6 (they did the hard part, we did the vibes)
 - 😭 Suffering (renewable resource)
 - ☕ Whatever a kid drinks
 
@@ -106,31 +104,32 @@ Loss 10.81 → 1.94. It learned... something. ARC-AGI: 0% (certified rock behavi
 GPT-2 sized, dangerous levels of confidence. Still cooking. 👨‍🍳
 
 ### 👑 *MYTHOS* (The Mythos-Class Potato) — NEW FLAGSHIP
-- **Engine mode:** Kimi K2.6 behind the Mythos persona — full trillion-param brain, available immediately
-- **Potato mode:** 350M from-scratch model (12 layers / 16 heads / 1024 dim) trained on **data distilled from Kimi K2.6** — the potato inherits the wisdom of the mountain
-- **ARC-AGI (engine mode):** actually decent for once (we take credit)
-- **ARC-AGI (potato mode):** we'll get back to you (we won't)
+- **100% our own weights.** The org went fully sovereign — no external engines, no borrowed brains.
+- Current best: the ropus line, trained on articles, web text, code, and stories (see registry)
+- Next: 350M from-scratch (config/phase_mythos_350M.py) on Kaggle, then Alus 1 seeded from the best Ropus
+- **ARC-AGI:** we'll get back to you (we won't)
 
 ---
 
 ## 🛠️ How to build Mythos yourself (the whole pipeline)
 
-### Step 0 — Talk to Mythos immediately (engine mode)
+### Step 0 — Talk to our models immediately
 ```bash
-export MOONSHOT_API_KEY=sk-...          # https://platform.moonshot.ai
+python mai_serve.py &                    # serve the registry (our weights)
 python mythos/mythos_client.py           # interactive chat
 python mythos/mythos_client.py "one-shot question"
-# different engine version: export MYTHOS_ENGINE=kimi-k2.6
+# pick a model: export MYTHOS_ENGINE=ropus-0.5
 ```
-Runs on anything. It's an API call wearing a trench coat.
+Runs on anything. Zero external dependencies. The org is sovereign.
 
-Got [Model Deck](https://github.com/mohith2309/yojana_mitra_app/tree/main/local_models) (our other product, we have products now)? Point its **OpenAI-compatible** backend at `https://api.moonshot.ai/v1` with your key — Mythos in a full chat UI.
+Got [Model Deck](https://github.com/mohith2309/yojana_mitra_app/tree/main/local_models) (our other product, we have products now)? Use the **m.ai potato server** preset — our models in a full chat UI.
 
-### Step 1 — Distill the mountain into a dataset
+### Step 1 — Distill our best model into a dataset
 ```bash
-python train/distill_dataset.py --samples 2000 --out data/mythos_distill.jsonl
+python mai_serve.py &
+python train/distill_dataset.py --samples 2000 --out data/distill.jsonl
 ```
-Asks Kimi K2.6 thousands of questions (code, reasoning, stories — the potato curriculum), saves every answer. This is the "training data" a real org would pay millions for. We pay ₹0-per-token-until-the-free-tier-runs-out.
+Asks our own best model thousands of questions (code, reasoning, stories — the potato curriculum), saves every answer. Self-distillation: the potato teaches the next potato. The circle of starch.
 
 ### Step 2 — Tokenize for nanoGPT
 ```bash
@@ -159,7 +158,6 @@ ollama create mythos -f mythos/mythos.Modelfile
 | Pitti Rokini v0.1 | 0% | 0% | It tried |
 | Rokini Potoni | 0% | ~potato% | Still proud |
 | Bigini Potoni | TBD | TBD | Cooking |
-| **Mythos (engine)** | Kimi K2.6's score | Kimi K2.6's score | We simply take credit |
 | **Mythos (potato)** | TBD | TBD | The distillation copium is real |
 | Claude Opus 4.6 | high% | very high% | Our "goal" 💀 |
 
@@ -171,11 +169,11 @@ ollama create mythos -f mythos/mythos.Modelfile
 m.ai/                              ← rename the repo to this in Settings, we're an org now
 ├── README.md                      ← corporate communications (this)
 ├── mythos/
-│   ├── mythos_client.py           ← Mythos engine mode: Kimi K2.6 + persona, works today
+│   ├── mythos_client.py           ← chat client for OUR models (via mai_serve)
 │   ├── persona.py                 ← the Mythos identity (our moat)
 │   └── mythos.Modelfile           ← Ollama build for potato mode
 ├── train/
-│   ├── distill_dataset.py         ← milk Kimi K2.6 for training data
+│   ├── distill_dataset.py         ← self-distillation: potato teaches potato
 │   └── prepare_nanogpt_data.py    ← jsonl → train.bin/val.bin (tiktoken gpt2)
 ├── config/
 │   └── phase_mythos_350M.py       ← nanoGPT config for the Mythos potato
@@ -189,9 +187,9 @@ m.ai/                              ← rename the repo to this in Settings, we'r
 
 - [x] Rebrand to m.ai (rename repo in Settings → `m.ai`, takes 10 seconds, do it)
 - [x] Announce Mythos-class model before building it (this is called "product marketing")
-- [x] Mythos engine mode — Kimi K2.6 + persona ✅
+- [x] Went fully sovereign — removed all external engines, our weights only ✅
 - [x] Distillation pipeline ✅
-- [ ] Run distillation (needs your Moonshot API key)
+- [ ] Run self-distillation from our best model
 - [ ] Train Mythos-potato-350M on Kaggle (weeks of suffering, as is tradition)
 - [ ] 1B → 3B → 7B → electricity bill intervention
 - [ ] Beat Opus 4.6 — see you in 2045
@@ -200,8 +198,7 @@ m.ai/                              ← rename the repo to this in Settings, we'r
 
 ## 🔓 Jailbreaking
 
-Engine mode: take it up with Moonshot, that's their trillion parameters.
-Potato mode: there is still nothing to jailbreak. You cannot make a distilled potato evil. It will output slightly better broken Python than before and move on with its life. If you somehow do it — open an issue, we are DYING to know. Hall of Fame (a README comment) awaits. 🥔
+There is still nothing to jailbreak. You cannot make a distilled potato evil. It will output slightly better broken Python than before and move on with its life. If you somehow do it — open an issue, we are DYING to know. Hall of Fame (a README comment) awaits. 🥔
 
 ---
 
@@ -217,10 +214,10 @@ MIT. Take it. The org has nothing left. The org never had anything.
 
 > *"We are thrilled to announce Mythos, our most capable model tier"* — m.ai press release, written in a basement
 
-> *"bro it's just kimi with a system prompt"* — anonymous whistleblower (it was the kid)
+> *"bro it WAS just kimi with a system prompt"* — anonymous whistleblower (it was the kid; the org has since gone fully sovereign and would like that noted)
 
 > *"Why"* — everyone, still
 
-*Built with 💀 suffering, 🆓 free compute, 🌙 borrowed trillion-parameter wisdom, and absolutely zero corporate structure (the org is a vibe)*
+*Built with 💀 suffering, 🆓 free compute, 🥔 100% homegrown parameters, and absolutely zero corporate structure (the org is a vibe)*
 
 *— m.ai HQ (mom's basement), India 🇮🇳*

@@ -6,8 +6,7 @@ ALUS OMNI — m.ai's all-in-one model: text + image generation + video generatio
     python alus_omni/omni.py image "a potato supercomputer in a basement" --out potato.png
     python alus_omni/omni.py video "a rock learning to code" --seconds 30 --out rock.mp4
 
-Text runs anywhere (uses the m.ai registry potato weights, or the Kimi engine
-if MOONSHOT_API_KEY is set). Image and video need a GPU + one-time weight
+Text runs anywhere on the m.ai registry weights — our own models only. Image and video need a GPU + one-time weight
 downloads (pip install diffusers transformers accelerate safetensors, and
 ffmpeg on PATH for video). On CPU they will technically run and practically
 teach you patience.
@@ -31,13 +30,9 @@ FRAMES_PER_SCENE = 24  # 3s per scene at 8fps
 
 # ── text ───────────────────────────────────────────────────────────────
 def do_text(prompt, args):
-    if os.environ.get("MOONSHOT_API_KEY"):
-        sys.path.insert(0, os.path.join(REPO, "mythos"))
-        import mythos_client
-        print(mythos_client.chat([{"role": "user", "content": prompt}]))
-    else:
-        os.execv(sys.executable, [sys.executable, os.path.join(REPO, "mai_run.py"),
-                                  args.model, prompt])
+    # our own weights only — no external labs
+    os.execv(sys.executable, [sys.executable, os.path.join(REPO, "mai_run.py"),
+                              args.model, prompt])
 
 
 # ── image ──────────────────────────────────────────────────────────────

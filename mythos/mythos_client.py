@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
 """
-Mythos — engine mode.
+Mythos — chat client for OUR OWN models. No external labs.
 
-The Mythos persona running on the Kimi K2.6 engine (Moonshot API,
-OpenAI-compatible). Also works against any OpenAI-compatible server,
-including a local Ollama (for potato mode).
+Talks to any OpenAI-compatible server; the default is m.ai's own potato
+server (python mai_serve.py). We make our own models here.
 
 Usage:
-    export MOONSHOT_API_KEY=sk-...
+    python mai_serve.py &                          # serve the registry
     python mythos/mythos_client.py                 # interactive chat
     python mythos/mythos_client.py "a question"    # one-shot
 
 Env:
-    MOONSHOT_API_KEY   your key from https://platform.moonshot.ai
-    MYTHOS_ENGINE      engine model id (default: kimi-k2.6; falls back
-                       automatically to kimi-latest if the id is unknown)
-    MYTHOS_BASE_URL    default https://api.moonshot.ai/v1
-                       (point at http://localhost:11434/v1 for potato mode)
+    MYTHOS_ENGINE      model id (default: ropus-0.5; falls back to
+                       ropus-0.3 if not available yet)
+    MYTHOS_BASE_URL    default http://localhost:8123/v1 (mai_serve)
+    MOONSHOT_API_KEY   only used as a bearer token for servers that want
+                       auth; not needed for m.ai's own server
 """
 import json
 import os
@@ -27,10 +26,10 @@ import urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from persona import MYTHOS_SYSTEM_PROMPT
 
-BASE_URL = os.environ.get("MYTHOS_BASE_URL", "https://api.moonshot.ai/v1").rstrip("/")
+BASE_URL = os.environ.get("MYTHOS_BASE_URL", "http://localhost:8123/v1").rstrip("/")
 API_KEY = os.environ.get("MOONSHOT_API_KEY", "")
-ENGINE = os.environ.get("MYTHOS_ENGINE", "kimi-k2.6")
-FALLBACK_ENGINE = "kimi-latest"
+ENGINE = os.environ.get("MYTHOS_ENGINE", "ropus-0.5")
+FALLBACK_ENGINE = "ropus-0.3"
 
 
 def _post(path, payload):
@@ -72,17 +71,11 @@ def chat(messages, model=None, temperature=0.6):
 
 
 def main():
-    if not API_KEY and "moonshot" in BASE_URL:
-        raise SystemExit(
-            "Set MOONSHOT_API_KEY first (free tier at https://platform.moonshot.ai).\n"
-            "The org cannot expense this. The org has no expenses."
-        )
-
     if len(sys.argv) > 1:
         print(chat([{"role": "user", "content": " ".join(sys.argv[1:])}]))
         return
 
-    print("👑 Mythos (m.ai's Mythos-class model) — Ctrl-C or 'exit' to leave")
+    print(f"👑 Mythos on {ENGINE} (100% m.ai weights) — Ctrl-C or 'exit' to leave")
     history = []
     while True:
         try:

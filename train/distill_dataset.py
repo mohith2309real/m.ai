@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """
-Step 1 of training Mythos-potato: distill Kimi K2.6 into a dataset.
+Distill a teacher into a dataset. Default teacher: m.ai's own best model
+served by mai_serve.py (self-distillation — we make our own).
 
 Generates prompts across the potato curriculum (python, reasoning,
 explanations, short stories — matching the TinyStories + python-codes
-diet the earlier potatoes ate), asks the Kimi K2.6 engine each one, and
+diet the earlier potatoes ate), asks the teacher model each one, and
 writes {"prompt": ..., "response": ...} lines to a JSONL file.
 
 Resume-safe: if the output file already exists, finished prompts are
 skipped, so you can run it in bursts as the free tier allows.
 
 Usage:
-    export MOONSHOT_API_KEY=sk-...
-    python train/distill_dataset.py --samples 2000 --out data/mythos_distill.jsonl
+    python mai_serve.py &
+    python train/distill_dataset.py --samples 2000 --out data/distill.jsonl
 """
 import argparse
 import itertools

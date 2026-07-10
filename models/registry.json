@@ -104,10 +104,10 @@
     },
     "ropus-0.5": {
       "family": "ropus",
-      "role": "deep reasoner \u2014 first m.ai-TRAINED code release",
+      "role": "deep reasoner \u2014 m.ai-trained on the full mixed diet",
       "checkpoint": "checkpoints/ropus-0.5.pt",
       "status": "available",
-      "notes": "phase-2 weights (51M) fine-tuned 150 iters on 800 python-code docs from the internet + Ropus identity. Loss 2.02 -> 1.80.",
+      "notes": "phase-2 weights (51M) trained in two rounds on m.ai's own pipeline: 800 python-code docs, then a 1,600-doc mixed corpus (Wikipedia articles, web text, code, stories) with m.ai identity + behavior docs distilled from mai/SYSTEM_PROMPT.md. Loss 7.5 -> 4.2 on the mixed domain. Knows its name, attempts encyclopedic prose, remains a potato.",
       "profile": {
         "temperature": 0.5,
         "top_k": 50,
