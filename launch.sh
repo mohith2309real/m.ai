@@ -44,7 +44,7 @@ if [ "$(wc -c < checkpoints/ropus-0.5.pt 2>/dev/null || echo 0)" -lt 1000 ]; the
 fi
 
 echo "[m.ai] starting m.ai on :8123 (API + web interface, single port)"
-"$PY" mai_serve.py > /tmp/mai_serve.log 2>&1 &
+"$PY" mai_serve.py > .mai_serve.log 2>&1 &
 SERVE_PID=$!
 trap 'kill $SERVE_PID 2>/dev/null' EXIT
 
@@ -55,6 +55,7 @@ case "$(uname)" in
   Linux)  xdg-open "$URL" 2>/dev/null || true ;;
 esac
 echo "[m.ai] interface: $URL  (hit Connect — it points at the server already)"
+echo "[m.ai] server log: .mai_serve.log"
 
 if [ "${1:-}" != "--no-tui" ]; then
   "$PY" app/mai_code.py

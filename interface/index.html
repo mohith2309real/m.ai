@@ -405,7 +405,7 @@ const FLEET = [
 
 // ─────────────────────────── helpers ───────────────────────────
 const $ = id => document.getElementById(id);
-const esc = s => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+const esc = s => { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
 const fmtBytes = b => !b ? '0 B' : (b/1e9 >= 1 ? (b/1e9).toFixed(1)+' GB' : (b/1e6).toFixed(0)+' MB');
 const save = () => { localStorage.setItem(LS.chats, JSON.stringify(state.chats)); localStorage.setItem(LS.mem, JSON.stringify(state.memory)); };
 const isOllama = () => state.backend === 'ollama';

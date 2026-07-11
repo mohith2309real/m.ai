@@ -16,6 +16,7 @@ base models, not chat models; manage your expectations and your dreams.
 import argparse
 import json
 import os
+import re
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -87,13 +88,30 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *a):
         print("[serve]", fmt % a)
 
+    def _cors_origin(self):
+        # localhost pages only (any port) — a random website should not get to
+        # use your potato. MAI_ORIGINS="*" restores the open-door policy.
+        origin = self.headers.get("Origin", "")
+        if os.environ.get("MAI_ORIGINS", "") == "*":
+            return "*"
+        if re.match(r"^https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$", origin):
+            return origin
+        return None
+
     def _headers(self, code=200, ctype="application/json"):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "*")
-        self.send_header("Access-Control-Allow-Headers", "*")
+        origin = self._cors_origin()
+        if origin:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Methods", "*")
+            self.send_header("Access-Control-Allow-Headers", "*")
+            self.send_header("Vary", "Origin")
         self.end_headers()
+
+    def _bad_request(self, msg):
+        self._headers(400)
+        self.wfile.write(json.dumps({"error": {"message": msg}}).encode())
 
     def do_OPTIONS(self):
         self._headers(204)
@@ -124,11 +142,30 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._headers(404)
 
+    def _authed(self):
+        # opt-in: export MAI_API_KEY on the server to require it from clients
+        want = os.environ.get("MAI_API_KEY", "")
+        if not want:
+            return True
+        got = self.headers.get("Authorization", "")
+        return got == f"Bearer {want}"
+
     def do_POST(self):
         if self.path != "/v1/chat/completions":
             self._headers(404)
             return
-        body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
+        if not self._authed():
+            self._headers(401)
+            self.wfile.write(json.dumps({"error": {"message":
+                "MAI_API_KEY is set on this server — send Authorization: Bearer <key>"}}).encode())
+            return
+        try:
+            body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
+            if not isinstance(body, dict):
+                raise ValueError("body must be a JSON object")
+        except (ValueError, json.JSONDecodeError):
+            self._bad_request("invalid JSON body")
+            return
         models = available_models()
         name = body.get("model")
         if name not in models:
@@ -146,13 +183,17 @@ class Handler(BaseHTTPRequestHandler):
         model = get_model(name, spec)
         prof = spec["profile"]
         opts = body.get("options") or {}  # Ollama-style knobs from the Deck UI
-        temperature = float(body.get("temperature") or opts.get("temperature")
-                            or prof["temperature"])
-        top_k = int(opts.get("top_k") or prof["top_k"])
-        penalty = float(body.get("repetition_penalty")
-                        or opts.get("repeat_penalty")
-                        or prof.get("repeat_penalty", 1.3))
-        max_toks = min(int(body.get("max_tokens") or prof["max_new_tokens"]), 500)
+        try:
+            temperature = float(body.get("temperature") or opts.get("temperature")
+                                or prof["temperature"])
+            top_k = max(1, int(opts.get("top_k") or prof["top_k"]))
+            penalty = float(body.get("repetition_penalty")
+                            or opts.get("repeat_penalty")
+                            or prof.get("repeat_penalty", 1.3))
+            max_toks = min(int(body.get("max_tokens") or prof["max_new_tokens"]), 500)
+        except (TypeError, ValueError):
+            self._bad_request("temperature/top_k/max_tokens must be numbers")
+            return
         idx = torch.tensor([enc.encode_ordinary(prompt)[-model.config.block_size + 1:]],
                            dtype=torch.long)
         gen = generate_ids(model, idx, max_toks, temperature, top_k, penalty)
@@ -190,11 +231,17 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8123)
+    ap.add_argument("--host", default=os.environ.get("MAI_HOST", "127.0.0.1"),
+                    help="bind address (default localhost-only; "
+                         "--host 0.0.0.0 to serve your LAN)")
     args = ap.parse_args()
     names = list(available_models())
     print(f"[serve] m.ai potato server on http://localhost:{args.port}/v1")
     print(f"[serve] serving: {', '.join(names) or 'NOTHING — git lfs pull first'}")
-    ThreadingHTTPServer(("0.0.0.0", args.port), Handler).serve_forever()
+    if args.host not in ("127.0.0.1", "localhost", "::1"):
+        print(f"[serve] WARNING: bound to {args.host} — everyone on your network "
+              "can use your potato")
+    ThreadingHTTPServer((args.host, args.port), Handler).serve_forever()
 
 
 if __name__ == "__main__":

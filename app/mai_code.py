@@ -47,6 +47,15 @@ SERVER = os.environ.get("MAI_SERVER", "http://localhost:8123")
 def c(code, s):
     return f"\033[{code}m{s}\033[0m" if sys.stdout.isatty() else s
 
+
+# model/server output is untrusted — strip ANSI/OSC/control bytes so a reply
+# can't spoof the [y/N] tool prompt or rewrite the screen (keep \n and \t)
+_CTRL = re.compile(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b[@-Z\\-_]|\x1b\[[0-9;?]*[ -/]*[@-~]|[\x00-\x08\x0b-\x1f\x7f]")
+
+
+def safe(s):
+    return _CTRL.sub("", s)
+
 VIOLET = "38;5;135"
 TEAL = "38;5;43"
 DIM = "2"
@@ -427,7 +436,7 @@ def main():
         boosted = cfg.get("theater", True) and thinking_theater(user)  # maximum effort, minimum result
         print(c(BOLD, f"{model} "), end="", flush=True)
         try:
-            reply = chat(model, history, lambda t: print(t, end="", flush=True),
+            reply = chat(model, history, lambda t: print(safe(t), end="", flush=True),
                          max_tokens=400 if boosted else None,
                          temperature=cfg.get("temperature"))
         except (urllib.error.URLError, OSError) as e:

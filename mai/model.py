@@ -123,7 +123,8 @@ class GPT(nn.Module):
 
 def load_checkpoint(path, device="cpu"):
     """Load any m.ai / nanoGPT checkpoint (.pt) and return a ready model."""
-    ckpt = torch.load(path, map_location=device, weights_only=False)
+    # weights_only: tensors/dicts only — a .pt can otherwise execute code on load
+    ckpt = torch.load(path, map_location=device, weights_only=True)
     config = GPTConfig(**ckpt["model_args"])
     model = GPT(config)
     sd = ckpt["model"]
