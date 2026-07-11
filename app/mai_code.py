@@ -48,13 +48,24 @@ DIM = "2"
 BOLD = "1"
 RED = "38;5;204"
 
-BANNER = r"""
-  ┌─────────────────────────────────────────────┐
-  │   m . a i   c o d e                         │
-  │   the org's agentic terminal                │
-  │   models from scratch · basement frontier   │
-  └─────────────────────────────────────────────┘
-"""
+# the m.ai wordmark, violet→teal gradient, one color per line (like the logo)
+BANNER_ART = [
+    r"  ███╗   ███╗      █████╗ ██╗ ",
+    r"  ████╗ ████║     ██╔══██╗██║ ",
+    r"  ██╔████╔██║     ███████║██║ ",
+    r"  ██║╚██╔╝██║     ██╔══██║██║ ",
+    r"  ██║ ╚═╝ ██║ ██╗ ██║  ██║██║ ",
+    r"  ╚═╝     ╚═╝ ╚═╝ ╚═╝  ╚═╝╚═╝ ",
+]
+# violet → blue → teal, top to bottom (same gradient as the logo)
+BANNER_SHADES = ["38;5;135", "38;5;99", "38;5;63", "38;5;39", "38;5;44", "38;5;43"]
+BANNER_TAG = "c o d e  —  the org's agentic terminal · models from scratch · basement frontier"
+
+
+def print_banner():
+    for line, shade in zip(BANNER_ART, BANNER_SHADES):
+        print(c(shade, line))
+    print(c(DIM, "  " + BANNER_TAG) + "\n")
 
 
 # ── server plumbing ────────────────────────────────────────────────────
@@ -163,7 +174,7 @@ def main():
     if "--model" in sys.argv:
         model = sys.argv[sys.argv.index("--model") + 1]
 
-    print(c(VIOLET, BANNER))
+    print_banner()
     models = ensure_server()
     model = model or pick_default(models)
     print(c(DIM, f"  server {SERVER} · {len(models)} models · talking to ") + c(BOLD, model))

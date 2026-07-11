@@ -44,6 +44,35 @@ def available_models():
     return out
 
 
+def generate_ids(model, idx, max_toks, temperature, top_k, penalty):
+    """Sample token ids one at a time with a repetition penalty.
+
+    Small base models loop hard ("New York, New York, New York...") without
+    one — CTRL-style: downweight every token already in the context.
+    """
+    import torch
+    seen = set(idx[0].tolist())
+    with torch.no_grad():
+        for _ in range(max_toks):
+            cond = idx[:, -model.config.block_size:]
+            logits = model(cond)[:, -1, :]
+            if penalty > 1.0 and seen:
+                ids = torch.tensor(sorted(seen), dtype=torch.long)
+                vals = logits[0, ids]
+                logits[0, ids] = torch.where(vals > 0, vals / penalty, vals * penalty)
+            logits = logits / max(temperature, 1e-5)
+            k = min(int(top_k), logits.size(-1))
+            v, _ = torch.topk(logits, k)
+            logits[logits < v[:, [-1]]] = -float("inf")
+            nxt = torch.multinomial(torch.softmax(logits, dim=-1), 1)
+            idx = torch.cat((idx, nxt), dim=1)
+            tid = nxt.item()
+            if tid == 50256:  # <|endoftext|> — the potato is done talking
+                return
+            seen.add(tid)
+            yield tid
+
+
 def get_model(name, spec):
     with _cache_lock:
         if name not in _cache:
@@ -116,42 +145,40 @@ class Handler(BaseHTTPRequestHandler):
         enc = tiktoken.get_encoding("gpt2")
         model = get_model(name, spec)
         prof = spec["profile"]
-        temperature = float(body.get("temperature") or prof["temperature"])
+        opts = body.get("options") or {}  # Ollama-style knobs from the Deck UI
+        temperature = float(body.get("temperature") or opts.get("temperature")
+                            or prof["temperature"])
+        top_k = int(opts.get("top_k") or prof["top_k"])
+        penalty = float(body.get("repetition_penalty")
+                        or opts.get("repeat_penalty")
+                        or prof.get("repeat_penalty", 1.3))
         max_toks = min(int(body.get("max_tokens") or prof["max_new_tokens"]), 500)
         idx = torch.tensor([enc.encode_ordinary(prompt)[-model.config.block_size + 1:]],
                            dtype=torch.long)
+        gen = generate_ids(model, idx, max_toks, temperature, top_k, penalty)
 
         if body.get("stream"):
             self._headers(200, "text/event-stream")
             gen_ids, sent = [], ""
-            with torch.no_grad():
-                for _ in range(max_toks):
-                    cond = idx[:, -model.config.block_size:]
-                    logits = model(cond)[:, -1, :] / max(temperature, 1e-5)
-                    v, _ = torch.topk(logits, prof["top_k"])
-                    logits[logits < v[:, [-1]]] = -float("inf")
-                    nxt = torch.multinomial(torch.softmax(logits, dim=-1), 1)
-                    idx = torch.cat((idx, nxt), dim=1)
-                    # decode cumulatively so multi-byte UTF-8 split across BPE
-                    # tokens never emits replacement characters
-                    gen_ids.append(nxt.item())
-                    full = enc.decode(gen_ids)
-                    if full.endswith("\ufffd"):
-                        continue  # mid-character; wait for the next token
-                    tok, sent = full[len(sent):], full
-                    chunk = {"object": "chat.completion.chunk", "model": name,
-                             "choices": [{"index": 0, "delta": {"content": tok},
-                                          "finish_reason": None}]}
-                    try:
-                        self.wfile.write(f"data: {json.dumps(chunk)}\n\n".encode())
-                        self.wfile.flush()
-                    except BrokenPipeError:
-                        return
+            for tid in gen:
+                # decode cumulatively so multi-byte UTF-8 split across BPE
+                # tokens never emits replacement characters
+                gen_ids.append(tid)
+                full = enc.decode(gen_ids)
+                if full.endswith("\ufffd"):
+                    continue  # mid-character; wait for the next token
+                tok, sent = full[len(sent):], full
+                chunk = {"object": "chat.completion.chunk", "model": name,
+                         "choices": [{"index": 0, "delta": {"content": tok},
+                                      "finish_reason": None}]}
+                try:
+                    self.wfile.write(f"data: {json.dumps(chunk)}\n\n".encode())
+                    self.wfile.flush()
+                except BrokenPipeError:
+                    return
             self.wfile.write(b"data: [DONE]\n\n")
         else:
-            out = model.generate(idx, max_toks, temperature=temperature,
-                                 top_k=prof["top_k"])
-            text = enc.decode(out[0, idx.size(1):].tolist())
+            text = enc.decode(list(gen))
             self._headers()
             self.wfile.write(json.dumps({
                 "object": "chat.completion", "model": name,
