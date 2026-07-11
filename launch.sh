@@ -13,10 +13,27 @@ command -v git-lfs >/dev/null || git lfs version >/dev/null 2>&1 || {
   echo "       mac: brew install git-lfs    linux: sudo apt install git-lfs"
   exit 1
 }
-python3 -c "import torch, tiktoken" 2>/dev/null || {
-  echo "[m.ai] installing torch + tiktoken (one-time, CPU build)..."
-  pip install torch tiktoken --index-url https://download.pytorch.org/whl/cpu
-  pip install tiktoken
+# pick a python: our .venv if it exists, else system python3 if it already
+# has the deps, else make a .venv and install into it (macs ship python3 with
+# no bare `pip`, and homebrew pythons refuse global installs — the venv
+# sidesteps both)
+PY="$(pwd)/.venv/bin/python"
+if [ ! -x "$PY" ]; then
+  if python3 -c "import torch, tiktoken" 2>/dev/null; then
+    PY=python3
+  else
+    echo "[m.ai] first run: creating .venv + installing torch + tiktoken (one-time)..."
+    python3 -m venv .venv
+    "$PY" -m pip install --quiet --upgrade pip
+    if [ "$(uname)" = "Darwin" ]; then
+      "$PY" -m pip install torch tiktoken
+    else
+      "$PY" -m pip install torch tiktoken --index-url https://download.pytorch.org/whl/cpu
+    fi
+  fi
+fi
+"$PY" -c "import torch, tiktoken" || {
+  echo "[m.ai] install didn't take — try: rm -rf .venv && ./launch.sh"; exit 1
 }
 
 # weights present? (LFS pointers are ~134 bytes)
@@ -27,7 +44,7 @@ if [ "$(wc -c < checkpoints/ropus-0.5.pt 2>/dev/null || echo 0)" -lt 1000 ]; the
 fi
 
 echo "[m.ai] starting m.ai on :8123 (API + web interface, single port)"
-python3 mai_serve.py > /tmp/mai_serve.log 2>&1 &
+"$PY" mai_serve.py > /tmp/mai_serve.log 2>&1 &
 SERVE_PID=$!
 trap 'kill $SERVE_PID 2>/dev/null' EXIT
 
@@ -40,7 +57,7 @@ esac
 echo "[m.ai] interface: $URL  (hit Connect — it points at the server already)"
 
 if [ "${1:-}" != "--no-tui" ]; then
-  python3 app/mai_code.py
+  "$PY" app/mai_code.py
 else
   echo "[m.ai] running. Ctrl-C to stop everything."
   wait
