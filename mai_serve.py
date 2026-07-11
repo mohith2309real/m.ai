@@ -10,8 +10,9 @@ your own from-scratch weights.
     python mai_serve.py --port 8123
 
 Endpoints: GET /v1/models, POST /v1/chat/completions (stream + non-stream).
-The prompt sent to the potato is the last user message, raw — these are
-base models, not chat models; manage your expectations and your dreams.
+Base models get the last user message, raw. Checkpoints saved with
+"chat": True (train/finetune_chat_cpu.py) get the full history rendered
+in the m.ai chat template — those actually reply instead of continuing.
 """
 import argparse
 import json
@@ -53,6 +54,7 @@ def generate_ids(model, idx, max_toks, temperature, top_k, penalty):
     """
     import torch
     seen = set(idx[0].tolist())
+    seen.discard(50256)  # never penalize <|endoftext|> — stopping must stay easy
     with torch.no_grad():
         for _ in range(max_toks):
             cond = idx[:, -model.config.block_size:]
@@ -75,13 +77,33 @@ def generate_ids(model, idx, max_toks, temperature, top_k, penalty):
 
 
 def get_model(name, spec):
+    """Return (model, is_chat) — is_chat comes from the checkpoint itself
+    (train/finetune_chat_cpu.py stamps "chat": True on what it saves)."""
     with _cache_lock:
         if name not in _cache:
             from model import load_checkpoint
             print(f"[serve] loading {name} <- {spec['checkpoint']}")
             _cache.clear()  # one model in memory at a time; potatoes share a kitchen
-            _cache[name] = load_checkpoint(os.path.join(REPO, spec["checkpoint"]))[0]
+            model, ckpt = load_checkpoint(os.path.join(REPO, spec["checkpoint"]))
+            _cache[name] = (model, bool(ckpt.get("chat")))
         return _cache[name]
+
+
+STOP_MARKERS = ("<|user|>", "<|mai|>")
+
+
+def trim_stops(text):
+    """(text, hit) — cut chat output at the first turn marker the model tries
+    to hallucinate, and hold back a trailing partial marker so a stream never
+    emits half of one."""
+    hits = [text.find(s) for s in STOP_MARKERS if s in text]
+    if hits:
+        return text[:min(hits)], True
+    for n in range(min(len(text), len(STOP_MARKERS[0]) - 1), 0, -1):
+        tail = text[-n:]
+        if any(s.startswith(tail) for s in STOP_MARKERS):
+            return text[:-n], False
+    return text, False
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -174,13 +196,11 @@ class Handler(BaseHTTPRequestHandler):
                 f"unknown/unavailable model '{name}' — GET /v1/models"}}).encode())
             return
         spec = models[name]
-        prompt = next((m["content"] for m in reversed(body.get("messages", []))
-                       if m.get("role") == "user"), "Once upon a time")
 
         import tiktoken
         import torch
         enc = tiktoken.get_encoding("gpt2")
-        model = get_model(name, spec)
+        model, is_chat = get_model(name, spec)
         prof = spec["profile"]
         opts = body.get("options") or {}  # Ollama-style knobs from the Deck UI
         try:
@@ -194,8 +214,23 @@ class Handler(BaseHTTPRequestHandler):
         except (TypeError, ValueError):
             self._bad_request("temperature/top_k/max_tokens must be numbers")
             return
-        idx = torch.tensor([enc.encode_ordinary(prompt)[-model.config.block_size + 1:]],
-                           dtype=torch.long)
+        msgs = body.get("messages", [])
+        if is_chat:
+            # render the whole history in the template the model was tuned on,
+            # then open an assistant turn for it to fill
+            parts = []
+            for m in msgs:
+                if m.get("role") == "user":
+                    parts.append(f"<|user|>\n{m.get('content', '')}\n")
+                elif m.get("role") == "assistant":
+                    parts.append(f"<|mai|>\n{m.get('content', '')}<|endoftext|>")
+            parts.append("<|mai|>\n")
+            ids = enc.encode("".join(parts), allowed_special={"<|endoftext|>"})
+        else:
+            prompt = next((m["content"] for m in reversed(msgs)
+                           if m.get("role") == "user"), "Once upon a time")
+            ids = enc.encode_ordinary(prompt)
+        idx = torch.tensor([ids[-model.config.block_size + 1:]], dtype=torch.long)
         gen = generate_ids(model, idx, max_toks, temperature, top_k, penalty)
 
         if body.get("stream"):
@@ -208,18 +243,26 @@ class Handler(BaseHTTPRequestHandler):
                 full = enc.decode(gen_ids)
                 if full.endswith("\ufffd"):
                     continue  # mid-character; wait for the next token
+                hit = False
+                if is_chat:
+                    full, hit = trim_stops(full)
                 tok, sent = full[len(sent):], full
-                chunk = {"object": "chat.completion.chunk", "model": name,
-                         "choices": [{"index": 0, "delta": {"content": tok},
-                                      "finish_reason": None}]}
-                try:
-                    self.wfile.write(f"data: {json.dumps(chunk)}\n\n".encode())
-                    self.wfile.flush()
-                except BrokenPipeError:
-                    return
+                if tok:
+                    chunk = {"object": "chat.completion.chunk", "model": name,
+                             "choices": [{"index": 0, "delta": {"content": tok},
+                                          "finish_reason": None}]}
+                    try:
+                        self.wfile.write(f"data: {json.dumps(chunk)}\n\n".encode())
+                        self.wfile.flush()
+                    except BrokenPipeError:
+                        return
+                if hit:
+                    break  # model drifted into the next turn \u2014 its reply is over
             self.wfile.write(b"data: [DONE]\n\n")
         else:
             text = enc.decode(list(gen))
+            if is_chat:
+                text = trim_stops(text)[0].strip()
             self._headers()
             self.wfile.write(json.dumps({
                 "object": "chat.completion", "model": name,

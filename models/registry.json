@@ -126,6 +126,19 @@
         "max_new_tokens": 300
       }
     },
+    "ropus-chat-2.5": {
+      "family": "ropus",
+      "role": "receptive chat model \u2014 ropus-2.0 tuned on real conversations",
+      "checkpoint": "checkpoints/ropus-chat-2.5.pt",
+      "status": "available",
+      "notes": "ropus-2.0 chat-tuned on ~3,000 real instruction/response pairs (Alpaca, Dolly, UltraChat) with loss masking \u2014 it learns to produce the reply, never to echo the prompt. Checkpoint carries chat: true, so the server renders the <|user|>/<|mai|> template and stops at turn boundaries. Pure conversation, no identity mixing.",
+      "profile": {
+        "temperature": 0.7,
+        "top_k": 50,
+        "max_new_tokens": 250,
+        "repeat_penalty": 1.15
+      }
+    },
     "ropus-0.4": {
       "family": "ropus",
       "role": "deep reasoner",
