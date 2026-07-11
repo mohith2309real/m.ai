@@ -16,6 +16,10 @@ Slash commands:
     /ls [dir]             list a directory into context
     /clear                clear the conversation
     /update               pull the newest m.ai code + weights from GitHub
+    /config               view/set persisted settings (model, temperature, theater)
+    /status               server, model, uptime — the org dashboard
+    /cost                 what this session cost you
+    /credits              who built this (mohith. it was mohith)
     /exit                 leave
 
 Tool protocol (for models big enough to use it): if the model's reply
@@ -29,6 +33,7 @@ Zero dependencies beyond the repo (urllib + the m.ai server).
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -65,7 +70,9 @@ BANNER_TAG = "c o d e  —  the org's agentic terminal · models from scratch ·
 def print_banner():
     for line, shade in zip(BANNER_ART, BANNER_SHADES):
         print(c(shade, line))
-    print(c(DIM, "  " + BANNER_TAG) + "\n")
+    print(c(DIM, "  " + BANNER_TAG))
+    width = min(shutil.get_terminal_size((80, 24)).columns, 100)
+    print(c(DIM, "m.ai can make mistakes. it is literally a potato.".rjust(width)) + "\n")
 
 
 # ── server plumbing ────────────────────────────────────────────────────
@@ -101,8 +108,12 @@ def pick_default(models):
     return models[0] if models else None
 
 
-def chat(model, history, on_token):
+def chat(model, history, on_token, max_tokens=None, temperature=None):
     payload = {"model": model, "messages": history, "stream": True}
+    if max_tokens is not None:
+        payload["max_tokens"] = max_tokens
+    if temperature is not None:
+        payload["temperature"] = temperature
     req = urllib.request.Request(SERVER + "/v1/chat/completions",
                                  data=json.dumps(payload).encode(),
                                  headers={"Content-Type": "application/json"})
@@ -119,6 +130,114 @@ def chat(model, history, on_token):
             text += tok
             on_token(tok)
     return text
+
+
+# ── ceremony ───────────────────────────────────────────────────────────
+CREDITS = [
+    "m.ai — a very real org",
+    "designed & developed by mohith",
+    "models: potus · ropus · alus — trained from scratch",
+    "© 2026 m.ai · property of m.ai",
+    "AI can make mistakes. ours makes more. it is a potato.",
+]
+
+
+def print_credits():
+    """The org's legal department (also mohith) insists on this."""
+    w = max(len(s) for s in CREDITS)
+    print(c(VIOLET, "  ┌─" + "─" * w + "─┐"))
+    for s in CREDITS:
+        print(c(VIOLET, "  │ ") + s.ljust(w) + c(VIOLET, " │"))
+    print(c(VIOLET, "  └─" + "─" * w + "─┘"))
+
+
+def print_exit_footer():
+    print(c(DIM, "© 2026 m.ai · designed & developed by mohith · property of m.ai"))
+    print(c(DIM, "(the org thanks you for visiting the basement)"))
+
+
+TAN = "38;5;180"
+GREEN = "38;5;114"
+
+PITTI_MOODS = {
+    "idle": ("\u2500", "chief executive potato \u00b7 he is aware. he is fine."),
+    "error": ("o", "pitti has seen the error. pitti is unbothered."),
+}
+
+
+def print_pitti(mood="idle"):
+    """The org's mascot. He was here before the org."""
+    mouth, note = PITTI_MOODS.get(mood, PITTI_MOODS["idle"])
+    art = [
+        (GREEN, "       \\|/"),
+        (TAN,   "    .-~~~~~-."),
+        (TAN,   "   /  \u2022   \u2022  \\"),
+        (TAN,   "  |     " + mouth + "     |"),
+        (TAN,   "   \\         /"),
+        (TAN,   "    `-.___.-'  \u25e6"),
+    ]
+    label = ["", "", c(BOLD, "PITTI"), c(DIM, note),
+             c(DIM, "(the \u25e6 is his pet rock)"), ""]
+    for (shade, a), l in zip(art, label):
+        print(c(shade, a.ljust(20)) + l)
+
+
+# ── settings (the org has preferences now) ─────────────────────────────
+CONFIG_PATH = os.path.expanduser("~/.mai.json")
+
+
+def load_config():
+    try:
+        with open(CONFIG_PATH) as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError, ValueError):
+        return {}
+
+
+def save_config(cfg):
+    with open(CONFIG_PATH, "w") as f:
+        json.dump(cfg, f, indent=2)
+
+
+# maximum-effort keywords → theater scripts (longest/most specific first)
+THINK_MODES = [
+    ("ultracode", ["ULTRACODE ENGAGED — spawning 128 parallel potato agents…",
+                   "…they are all the same potato",
+                   "merging 128 identical opinions…"]),
+    ("ultrathink", ["engaging ultrathink — allocating all 51 million neurons…",
+                    "that is 0.006% of a Claude…",
+                    "neurons allocated. quality not guaranteed."]),
+    ("megathink", ["megathink: thinking medium-hard…",
+                   "consulting the potato council…"]),
+    ("think harder", ["thinking… harder…",
+                      "furrowing the potato's brow…"]),
+    ("max power", ["MAX POWER: redlining the potato…",
+                   "cooling fans (we do not have fans)…"]),
+]
+
+
+def thinking_theater(msg):
+    """Extended thinking, in the theatrical sense. Returns True if performed."""
+    low = msg.lower()
+    lines = next((ls for kw, ls in THINK_MODES if kw in low), None)
+    if lines is None:
+        return False
+    frames = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+    t0 = time.time()
+    if sys.stdout.isatty():
+        i = 0
+        while time.time() - t0 < 2.2:
+            status = lines[min(int((time.time() - t0) / 2.2 * len(lines)), len(lines) - 1)]
+            sys.stdout.write("\r\033[2K" + c(TEAL, frames[i % len(frames)]) + " " + c(DIM, status))
+            sys.stdout.flush()
+            time.sleep(0.08)
+            i += 1
+        sys.stdout.write("\r\033[2K")
+        sys.stdout.flush()
+    else:
+        print(c(DIM, lines[0]))
+    print(c(DIM, f"(thought for {time.time() - t0:.1f}s — mostly about starch)"))
+    return True
 
 
 # ── tools ──────────────────────────────────────────────────────────────
@@ -175,7 +294,12 @@ def main():
         model = sys.argv[sys.argv.index("--model") + 1]
 
     print_banner()
+    print_pitti()
+    cfg = load_config()
+    t0 = time.time()
     models = ensure_server()
+    if model is None and cfg.get("model") in models:
+        model = cfg["model"]
     model = model or pick_default(models)
     print(c(DIM, f"  server {SERVER} · {len(models)} models · talking to ") + c(BOLD, model))
     print(c(DIM, "  /help for commands\n"))
@@ -205,6 +329,9 @@ def main():
                 break
             elif cmd == "help":
                 print(c(DIM, __doc__.split("Slash commands:")[1].split("Tool protocol")[0]))
+                print(c(DIM, "  psst: put 'ultrathink' or 'ultracode' in a message for maximum effort mode\n"))
+            elif cmd == "credits":
+                print_credits()
             elif cmd == "models":
                 for mname in ensure_server():
                     mark = c(TEAL, " ← current") if mname == model else ""
@@ -235,22 +362,84 @@ def main():
                 print(c(TEAL, "[mai] context cleared"))
             elif cmd == "update":
                 update()
+            elif cmd == "config":
+                sub = arg.split()
+                if not sub:
+                    print(c(DIM, f"  config file: {CONFIG_PATH}"))
+                    print(f"  model        {cfg.get('model', '(auto — best available)')}")
+                    print(f"  temperature  {cfg.get('temperature', '(model default)')}")
+                    print(f"  theater      {'on' if cfg.get('theater', True) else 'off'}")
+                    print(c(DIM, "  /config set model|temperature|theater <value>"))
+                elif sub[0] == "set" and len(sub) >= 3:
+                    key, val = sub[1], " ".join(sub[2:])
+                    if key == "model":
+                        if val in ensure_server():
+                            cfg["model"] = val
+                            model = val
+                            save_config(cfg)
+                            print(c(TEAL, f"[mai] default model → {val} (saved)"))
+                        else:
+                            print(c(RED, f"[mai] unknown model '{val}' — /models"))
+                    elif key == "temperature":
+                        try:
+                            if val in ("default", "unset"):
+                                cfg.pop("temperature", None)
+                            else:
+                                cfg["temperature"] = float(val)
+                            save_config(cfg)
+                            print(c(TEAL, f"[mai] temperature → {cfg.get('temperature', 'model default')}"))
+                        except ValueError:
+                            print(c(RED, "[mai] temperature wants a number, or 'default'"))
+                    elif key == "theater":
+                        cfg["theater"] = val.lower() in ("on", "true", "1", "yes")
+                        save_config(cfg)
+                        print(c(TEAL, "[mai] thinking theater "
+                                + ("on (maximum effort restored)" if cfg["theater"]
+                                   else "off (the org will think quietly)")))
+                    else:
+                        print(c(RED, f"[mai] unknown setting '{key}' — model, temperature, theater"))
+                else:
+                    print(c(RED, "[mai] usage: /config  |  /config set <key> <value>"))
+            elif cmd == "status":
+                up = int(time.time() - t0)
+                turns = sum(1 for m in history if m["role"] == "user")
+                ver = "?"
+                vp = os.path.join(REPO, "VERSION")
+                if os.path.exists(vp):
+                    ver = open(vp).read().strip()
+                print(c(BOLD, "  m.ai status") + c(DIM, " — the org dashboard"))
+                print(f"  server   {SERVER}  ({len(ensure_server())} models)")
+                print(f"  model    {model}")
+                print(f"  version  {ver}")
+                print(f"  uptime   {up // 60}m {up % 60}s")
+                print(f"  turns    {turns}")
+                print(c(DIM, f"  config   {CONFIG_PATH}"))
+            elif cmd == "cost":
+                print("  session cost:   ₹0.00")
+                print("  lifetime cost:  ₹0.00")
+                print(c(DIM, "  the org cannot afford costs. that is the business model."))
             else:
                 print(c(RED, f"[mai] unknown command /{cmd} — /help"))
             continue
 
         # regular chat turn
         history.append({"role": "user", "content": user})
+        boosted = cfg.get("theater", True) and thinking_theater(user)  # maximum effort, minimum result
         print(c(BOLD, f"{model} "), end="", flush=True)
         try:
-            reply = chat(model, history, lambda t: print(t, end="", flush=True))
+            reply = chat(model, history, lambda t: print(t, end="", flush=True),
+                         max_tokens=400 if boosted else None,
+                         temperature=cfg.get("temperature"))
         except (urllib.error.URLError, OSError) as e:
             print(c(RED, f"\n[mai] server error: {e}"))
+            print_pitti("error")
             history.pop()
             continue
         print("\n")
         history.append({"role": "assistant", "content": reply})
         maybe_run_model_tools(reply, history)
+
+    print_exit_footer()  # both /exit and ctrl-d/ctrl-c land here
 
 
 if __name__ == "__main__":
