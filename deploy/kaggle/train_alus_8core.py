@@ -176,10 +176,12 @@ def _run(index, args):
         return args.lr * (0.1 + 0.45 * (1 + math.cos(math.pi * p)))
 
     def save(step, loss_val):
+        bl = loss_val.item() if hasattr(loss_val, "item") else float(loss_val)
         state = {"model": {k: v.cpu() for k, v in model.state_dict().items()},
-                 "model_args": CFG, "iter_num": step, "best_val_loss": loss_val, "config": {}}
+                 "model_args": CFG, "iter_num": step, "best_val_loss": bl, "config": {}}
         if is_chat: state["chat"] = True
-        xm.save(state, ckpt_path)          # collective; writes on master only
+        # single process: plain torch.save (xm.save's rendezvous needs a mesh)
+        (torch.save if args.single else xm.save)(state, ckpt_path)
         xm.master_print(f"[ckpt] {ckpt_path} @ step {step}")
 
     model.train(); t0 = time.time(); done = start
@@ -188,12 +190,16 @@ def _run(index, args):
         x, y = get_batch()
         _, loss = model(x, y)
         opt.zero_grad(); loss.backward()
-        xm.optimizer_step(opt)             # all-reduce grads across the 8 cores + step
+        if args.single:
+            opt.step(); xm.mark_step()     # one core: plain step (the proven path)
+        else:
+            xm.optimizer_step(opt)         # all-reduce grads across the 8 cores + step
         done += 1
         if done % 20 == 0:
             xm.add_step_closure(lambda l, d: xm.master_print(
                 f"[{args.phase}] step {d}/{args.steps}  loss {l.item():.3f}  "
-                f"({(time.time()-t0)/(d-start):.2f}s/step, 8 cores)"),
+                f"({(time.time()-t0)/(d-start):.2f}s/step, "
+                f"{'1 core' if args.single else '8 cores'})"),
                 args=(loss, done))
         if not is_chat and done % 2000 == 0:
             buf = refill()
@@ -212,10 +218,15 @@ def main():
     ap.add_argument("--warmup", type=int, default=500)
     ap.add_argument("--save-every", type=int, default=500)
     ap.add_argument("--data", default="/kaggle/working/chat_big.json")
+    ap.add_argument("--single", action="store_true",
+                    help="one TPU core, no xmp.spawn — reliable on Kaggle v5e")
     args = ap.parse_args()
     if args.phase == "chat" and args.lr == 3e-4:
         args.lr = 3e-5                     # gentle fine-tune LR
-    xmp.spawn(_run, args=(args,))          # all TPU cores
+    if args.single:
+        _run(0, args)                      # single core — the proven-reliable path
+    else:
+        xmp.spawn(_run, args=(args,))      # all 8 cores (fragile on some Kaggle TPUs)
 
 
 if __name__ == "__main__":
