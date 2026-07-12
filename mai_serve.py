@@ -46,14 +46,18 @@ def available_models():
     return out
 
 
-def generate_ids(model, idx, max_toks, temperature, top_k, penalty):
+def generate_ids(model, idx, max_toks, temperature, top_k, penalty,
+                 penalize_prompt=True):
     """Sample token ids one at a time with a repetition penalty.
 
     Small base models loop hard ("New York, New York, New York...") without
     one — CTRL-style: downweight every token already in the context.
+    Chat models pass penalize_prompt=False: they must stay free to reuse the
+    question's words ("capital", "France") — only their OWN output is
+    penalized, else long conversations spiral into rare-token junk.
     """
     import torch
-    seen = set(idx[0].tolist())
+    seen = set(idx[0].tolist()) if penalize_prompt else set()
     seen.discard(50256)  # never penalize <|endoftext|> — stopping must stay easy
     with torch.no_grad():
         for _ in range(max_toks):
@@ -90,6 +94,7 @@ def get_model(name, spec):
 
 
 STOP_MARKERS = ("<|user|>", "<|mai|>")
+USER_TAG, BOT_TAG = STOP_MARKERS
 
 
 def trim_stops(text):
@@ -216,22 +221,35 @@ class Handler(BaseHTTPRequestHandler):
             return
         msgs = body.get("messages", [])
         if is_chat:
-            # render the whole history in the template the model was tuned on,
-            # then open an assistant turn for it to fill
+            # render history in the template the model was tuned on — but the
+            # context is TINY (256 tokens), so fit whole turns newest-first: a
+            # chopped template is worse than a short memory
+            budget = model.config.block_size - 48   # leave room for the reply
+            tail = f"{BOT_TAG}\n"
+            used = len(enc.encode(tail))
             parts = []
-            for m in msgs:
+            for m in reversed(msgs):
                 if m.get("role") == "user":
-                    parts.append(f"<|user|>\n{m.get('content', '')}\n")
+                    txt = f"{USER_TAG}\n{m.get('content', '')}\n"
                 elif m.get("role") == "assistant":
-                    parts.append(f"<|mai|>\n{m.get('content', '')}<|endoftext|>")
-            parts.append("<|mai|>\n")
-            ids = enc.encode("".join(parts), allowed_special={"<|endoftext|>"})
+                    txt = f"{BOT_TAG}\n{m.get('content', '')}<|endoftext|>"
+                else:
+                    continue
+                toks = len(enc.encode(txt, allowed_special={"<|endoftext|>"}))
+                if used + toks > budget and parts:
+                    break                            # keep at least the newest turn
+                parts.append(txt)
+                used += toks
+            ids = enc.encode("".join(reversed(parts)) + tail,
+                             allowed_special={"<|endoftext|>"})
+            ids = ids[-(model.config.block_size - 32):]
         else:
             prompt = next((m["content"] for m in reversed(msgs)
                            if m.get("role") == "user"), "Once upon a time")
             ids = enc.encode_ordinary(prompt)
         idx = torch.tensor([ids[-model.config.block_size + 1:]], dtype=torch.long)
-        gen = generate_ids(model, idx, max_toks, temperature, top_k, penalty)
+        gen = generate_ids(model, idx, max_toks, temperature, top_k, penalty,
+                           penalize_prompt=not is_chat)
 
         if body.get("stream"):
             self._headers(200, "text/event-stream")
