@@ -5,3 +5,5 @@ out-*/
 .venv/
 .mai_serve.log
 deploy/_stage/
+deploy/browser/hf/
+*.onnx
