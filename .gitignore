@@ -4,3 +4,4 @@ data/
 out-*/
 .venv/
 .mai_serve.log
+deploy/_stage/
