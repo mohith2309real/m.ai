@@ -57,6 +57,19 @@
         "max_new_tokens": 200
       }
     },
+    "potus-chat-1.0": {
+      "family": "potus",
+      "role": "receptive chat model \u2014 potus-0.5 tuned on real conversations",
+      "checkpoint": "checkpoints/potus-chat-1.0.pt",
+      "status": "available",
+      "notes": "potus-0.5 chat-tuned 1,000 iters on the 3,000-conversation corpus (Alpaca, Dolly, UltraChat) with loss masking. Replies and stops instead of continuing your text. Pure conversation, no identity mixing.",
+      "profile": {
+        "temperature": 0.7,
+        "top_k": 50,
+        "max_new_tokens": 250,
+        "repeat_penalty": 1.15
+      }
+    },
     "potus-1.0": {
       "family": "potus",
       "role": "decisive executive \u2014 FINAL",
@@ -186,6 +199,19 @@
       "omni": {
         "image": "alus_omni: Stable Diffusion via diffusers (needs GPU)",
         "video": "alus_omni: clip-loop + ffmpeg concat, 30-60s (needs GPU)"
+      }
+    },
+    "alus-chat-1.5": {
+      "family": "alus",
+      "role": "receptive chat model — alus-1.0 tuned on real conversations",
+      "checkpoint": "checkpoints/alus-chat-1.5.pt",
+      "status": "available",
+      "notes": "alus-1.0 chat-tuned 1,000 iters on the 3,000-conversation corpus (Alpaca, Dolly, UltraChat) with loss masking. Replies and stops instead of continuing your text. Pure conversation, no identity mixing.",
+      "profile": {
+        "temperature": 0.7,
+        "top_k": 50,
+        "max_new_tokens": 250,
+        "repeat_penalty": 1.15
       }
     }
   }
