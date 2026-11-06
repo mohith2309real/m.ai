@@ -38,7 +38,11 @@ for f in ['potus-chat-1.0.pt', 'ropus-chat-2.5.pt', 'alus-chat-1.5.pt']:
 CELL 3 — start the potato server on 0.0.0.0:8123 (CORS open so a website can reach it)
 ────────────────────────────────────────────────────────────────────────
 import subprocess, os, time
-env = dict(os.environ, MAI_HOST='0.0.0.0', MAI_ORIGINS='*')
+import secrets
+# Keep this private: anyone with the tunnel URL otherwise controls your GPU budget.
+api_key = os.environ.get('MAI_API_KEY') or secrets.token_urlsafe(32)
+env = dict(os.environ, MAI_HOST='0.0.0.0', MAI_ORIGINS='*', MAI_API_KEY=api_key)
+print('API bearer token (store securely; do not share):', api_key)
 srv = subprocess.Popen(['python', 'mai_serve.py', '--host', '0.0.0.0', '--port', '8123'],
                        cwd='/kaggle/working/mai', env=env)
 time.sleep(6)
