@@ -1,0 +1,19 @@
+name: Check
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  server-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Server security tests (stdlib only)
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Syntax check
+        run: python -m compileall -q mai_serve.py deploy/kaggle
