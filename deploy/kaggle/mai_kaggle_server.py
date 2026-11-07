@@ -21,7 +21,7 @@ so repoint your website's DEFAULT_API / the Deck's server field to it.
 CELL 1 — code + deps (skip LFS: real weights arrive in cell 2)
 ────────────────────────────────────────────────────────────────────────
 !GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/mohith2309/m.ai.git /kaggle/working/mai
-!pip -q install torch tiktoken huggingface_hub
+!pip -q install torch==2.14.1 tiktoken==0.14.0 huggingface_hub==1.0.0
 
 ────────────────────────────────────────────────────────────────────────
 CELL 2 — the 3 chat checkpoints from the free HF model repo
