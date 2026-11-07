@@ -388,7 +388,7 @@ let state = {
 if (location.protocol.startsWith('http')) state.baseUrl = location.origin;
 const savedConn = JSON.parse(localStorage.getItem(LS.conn) || 'null');
 if (savedConn) {
-  state.backend = savedConn.backend; state.baseUrl = savedConn.baseUrl; state.apiKey = savedConn.apiKey || '';
+  state.backend = savedConn.backend; state.baseUrl = savedConn.baseUrl; state.apiKey = sessionStorage.getItem('mai_api_key') || '';
   backendType.value = state.backend; baseUrl.value = state.baseUrl; apiKey.value = state.apiKey;
 } else { baseUrl.value = state.baseUrl; }
 const FLEET = [
@@ -454,7 +454,8 @@ async function connect() {
   state.backend = backendType.value;
   state.baseUrl = baseUrl.value.replace(/\/+$/, '');
   state.apiKey = apiKey.value;
-  localStorage.setItem(LS.conn, JSON.stringify({ backend: state.backend, baseUrl: state.baseUrl, apiKey: state.apiKey }));
+  sessionStorage.setItem('mai_api_key', state.apiKey);
+  localStorage.setItem(LS.conn, JSON.stringify({ backend: state.backend, baseUrl: state.baseUrl }));
   connectBtn.textContent = '…';
   try {
     await refreshModels();
@@ -469,7 +470,8 @@ async function connect() {
         await refreshModels();
         state.connected = true; connDot.classList.add('on');
         connectBtn.textContent = 'Connected';
-        localStorage.setItem(LS.conn, JSON.stringify({ backend: state.backend, baseUrl: state.baseUrl, apiKey: state.apiKey }));
+        sessionStorage.setItem('mai_api_key', state.apiKey);
+  localStorage.setItem(LS.conn, JSON.stringify({ backend: state.backend, baseUrl: state.baseUrl }));
         return;
       } catch (e2) {}
     }
