@@ -26,9 +26,10 @@ if [ ! -x "$PY" ]; then
     python3 -m venv .venv
     "$PY" -m pip install --quiet --upgrade pip
     if [ "$(uname)" = "Darwin" ]; then
-      "$PY" -m pip install torch tiktoken
+      "$PY" -m pip install "torch==2.14.1" "tiktoken==0.14.0"
     else
-      "$PY" -m pip install torch tiktoken --index-url https://download.pytorch.org/whl/cpu
+      "$PY" -m pip install "torch==2.14.1" --index-url https://download.pytorch.org/whl/cpu
+      "$PY" -m pip install "tiktoken==0.14.0"
     fi
   fi
 fi
