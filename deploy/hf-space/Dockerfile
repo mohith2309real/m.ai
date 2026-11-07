@@ -5,8 +5,8 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # CPU-only torch (a fraction of the CUDA wheel's size) + tiktoken
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
- && pip install --no-cache-dir tiktoken
+RUN pip install --no-cache-dir torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu \
+ && pip install --no-cache-dir tiktoken==0.14.0
 
 # pre-warm the gpt2 BPE vocab into the image so runtime needs no network
 ENV TIKTOKEN_CACHE_DIR=/tmp/tiktoken
