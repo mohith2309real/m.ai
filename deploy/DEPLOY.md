@@ -13,7 +13,9 @@ are running. Good for showing a friend right now.
 
 ```bash
 brew install cloudflared
-# with mai_serve already running on :8123 (the Deck preview does this):
+export MAI_API_KEY="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+# Restart mai_serve with this MAI_API_KEY before opening the tunnel:
+# with mai_serve already running on :8123:
 cloudflared tunnel --url http://localhost:8123
 ```
 
@@ -49,9 +51,7 @@ bash deploy/trim_for_deploy.sh   # stages a lean copy in deploy/_stage
 4. Watch it build (~5 min). Your Deck is live at
    `https://<you>-m-ai.hf.space`.
 
-> Optional: set a `MAI_API_KEY` secret in Space settings if you don't want
-> the world using your compute. Note GET endpoints (model list, Deck HTML)
-> stay open even then — chat POSTs are what the key gates.
+> **Required:** configure a `MAI_API_KEY` secret in Space settings before starting the container. The server now refuses non-loopback binds without a key. GET endpoints (model list, Deck HTML) remain public; chat POSTs require `Authorization: Bearer <key>`. A public browser Deck needs a secure way to provide that bearer token.
 
 ---
 
@@ -61,4 +61,4 @@ bash deploy/trim_for_deploy.sh   # stages a lean copy in deploy/_stage
 provisioning can throw capacity errors. Only worth it if you need it never
 to sleep. Setup: provision an Ampere VM, `git clone`, `./launch.sh`, open
 the firewall for the port, point a process manager (systemd) at
-`mai_serve.py --host 0.0.0.0`.
+`mai_serve.py --host 0.0.0.0` with `MAI_API_KEY` set as a secret.

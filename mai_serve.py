@@ -15,6 +15,7 @@ Base models get the last user message, raw. Checkpoints saved with
 in the m.ai chat template — those actually reply instead of continuing.
 """
 import argparse
+import hmac
 import json
 import os
 import re
@@ -170,12 +171,12 @@ class Handler(BaseHTTPRequestHandler):
             self._headers(404)
 
     def _authed(self):
-        # opt-in: export MAI_API_KEY on the server to require it from clients
+        # Public listeners must never silently become open inference endpoints.
         want = os.environ.get("MAI_API_KEY", "")
         if not want:
-            return True
+            return self.server.server_address[0] in ("127.0.0.1", "localhost", "::1")
         got = self.headers.get("Authorization", "")
-        return got == f"Bearer {want}"
+        return hmac.compare_digest(got, f"Bearer {want}")
 
     def do_POST(self):
         if self.path != "/v1/chat/completions":
@@ -184,7 +185,7 @@ class Handler(BaseHTTPRequestHandler):
         if not self._authed():
             self._headers(401)
             self.wfile.write(json.dumps({"error": {"message":
-                "MAI_API_KEY is set on this server — send Authorization: Bearer <key>"}}).encode())
+                "Authentication required — configure MAI_API_KEY and send Authorization: Bearer <key>"}}).encode())
             return
         try:
             body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
@@ -302,6 +303,8 @@ def main():
     if args.host not in ("127.0.0.1", "localhost", "::1"):
         print(f"[serve] WARNING: bound to {args.host} — everyone on your network "
               "can use your potato")
+    if args.host not in ("127.0.0.1", "localhost", "::1") and not os.environ.get("MAI_API_KEY"):
+        ap.error("MAI_API_KEY must be set before binding to a network interface")
     ThreadingHTTPServer((args.host, args.port), Handler).serve_forever()
 
 

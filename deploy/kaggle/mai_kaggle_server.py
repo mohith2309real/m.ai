@@ -21,7 +21,7 @@ so repoint your website's DEFAULT_API / the Deck's server field to it.
 CELL 1 — code + deps (skip LFS: real weights arrive in cell 2)
 ────────────────────────────────────────────────────────────────────────
 !GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/mohith2309/m.ai.git /kaggle/working/mai
-!pip -q install torch tiktoken huggingface_hub
+!pip -q install torch==2.14.1 tiktoken==0.14.0 huggingface_hub==1.0.0
 
 ────────────────────────────────────────────────────────────────────────
 CELL 2 — the 3 chat checkpoints from the free HF model repo
@@ -38,7 +38,11 @@ for f in ['potus-chat-1.0.pt', 'ropus-chat-2.5.pt', 'alus-chat-1.5.pt']:
 CELL 3 — start the potato server on 0.0.0.0:8123 (CORS open so a website can reach it)
 ────────────────────────────────────────────────────────────────────────
 import subprocess, os, time
-env = dict(os.environ, MAI_HOST='0.0.0.0', MAI_ORIGINS='*')
+import secrets
+# Keep this private: anyone with the tunnel URL otherwise controls your GPU budget.
+api_key = os.environ.get('MAI_API_KEY') or secrets.token_urlsafe(32)
+env = dict(os.environ, MAI_HOST='0.0.0.0', MAI_ORIGINS='*', MAI_API_KEY=api_key)
+print('API bearer token (store securely; do not share):', api_key)
 srv = subprocess.Popen(['python', 'mai_serve.py', '--host', '0.0.0.0', '--port', '8123'],
                        cwd='/kaggle/working/mai', env=env)
 time.sleep(6)
